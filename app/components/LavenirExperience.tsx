@@ -8,9 +8,11 @@ import {
   canAdvanceQuestion,
   computeRecommendations,
 } from "../lavenir/matching";
-import type { Answers, QuestionId, Recommendation, Stage } from "../lavenir/types";
+import type { Answers, LocationChoice, QuestionId, Recommendation, Stage } from "../lavenir/types";
 
 const INITIAL_ANSWERS: Answers = {
+  location: "",
+  locationDetail: "",
   workStyle: [],
   curiosity: [],
   environment: [],
@@ -18,12 +20,14 @@ const INITIAL_ANSWERS: Answers = {
   optional: "",
 };
 
+const OPTION_CARD =
+  "rounded-xl border bg-white text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-2";
 const GLASS_PANEL =
   "glass-panel rounded-[1.75rem] sm:rounded-[2rem]";
 const GLASS_CARD =
-  "glass-panel-subtle rounded-2xl transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_48px_rgba(0,0,0,0.07)]";
+  "glass-panel-subtle rounded-2xl border border-zinc-200/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)]";
 const QUESTIONNAIRE_CARD =
-  "mx-auto w-full max-w-xl rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-sm md:max-w-2xl";
+  "mx-auto flex w-full max-w-xl flex-col rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-sm md:max-w-2xl";
 
 function ExperienceBackdrop() {
   return (
@@ -95,13 +99,12 @@ function SelectableCard({
       onClick={onToggle}
       aria-pressed={selected}
       className={[
-        GLASS_CARD,
-        "relative flex items-center text-left text-[0.9375rem] font-medium leading-snug tracking-tight",
-        compact ? "h-14 px-5 py-3 pr-10" : "px-5 py-[1.125rem] pr-10",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        OPTION_CARD,
+        "relative flex items-center font-medium leading-snug tracking-tight",
+        compact ? "h-14 px-4 py-3 pr-10 text-sm" : "px-5 py-4 pr-10 text-[0.9375rem]",
         selected
-          ? "animate-select-pulse border-emerald-300/70 bg-white/90 text-emerald-950 shadow-[0_12px_40px_rgba(16,185,129,0.12)] ring-1 ring-emerald-200/60 -translate-y-0.5"
-          : "border-zinc-200/70 text-zinc-700 hover:border-zinc-300/80 hover:bg-white/80",
+          ? "animate-select-pulse border-emerald-400 bg-emerald-50/60 text-zinc-900 ring-1 ring-emerald-200/80 -translate-y-px"
+          : "border-zinc-200 text-zinc-700 hover:-translate-y-px hover:border-zinc-300",
       ].join(" ")}
     >
       <span className="line-clamp-2">{label}</span>
@@ -125,6 +128,81 @@ function SelectableCard({
         </svg>
       </span>
     </button>
+  );
+}
+
+function LocationChoiceCard({
+  title,
+  subtitle,
+  selected,
+  onSelect,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  selected: boolean;
+  onSelect: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        className={[
+          OPTION_CARD,
+          "w-full p-5",
+          selected
+            ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-200/80 -translate-y-px"
+            : "border-zinc-200 hover:-translate-y-px hover:border-zinc-300",
+        ].join(" ")}
+      >
+        <span className="block text-base font-medium text-zinc-900">{title}</span>
+        <span className="mt-1 block text-sm text-zinc-500">{subtitle}</span>
+      </button>
+      {selected && children}
+    </div>
+  );
+}
+
+function QuestionNavigation({
+  onBack,
+  onNext,
+  backDisabled,
+  nextDisabled,
+  nextLabel,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  backDisabled: boolean;
+  nextDisabled: boolean;
+  nextLabel: string;
+}) {
+  return (
+    <div className="mt-auto flex items-center justify-between gap-4 border-t border-zinc-100 pt-6">
+      <button
+        type="button"
+        onClick={onBack}
+        disabled={backDisabled}
+        className="rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900 disabled:invisible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300"
+      >
+        Retour
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={nextDisabled}
+        className={[
+          "rounded-xl px-7 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2",
+          nextDisabled
+            ? "cursor-not-allowed bg-zinc-100 text-zinc-400"
+            : "bg-emerald-600 text-white hover:bg-emerald-700",
+        ].join(" ")}
+      >
+        {nextLabel}
+      </button>
+    </div>
   );
 }
 
@@ -190,12 +268,11 @@ function ConversationProgress({
     </nav>
   );
 }
-
-function WelcomeStage({ onStart }: { onStart: () => void }) {
+export function WelcomeStage({ onStart }: { onStart: () => void }) {
   return (
     <main className="mx-auto flex max-w-3xl flex-1 flex-col justify-center px-6 py-24 sm:px-10 sm:py-32">
       <FadeIn className="mx-auto w-full max-w-xl">
-        <div className={`${GLASS_PANEL} px-8 py-14 text-center sm:px-14 sm:py-16`}>
+        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-8 py-14 text-center sm:px-14 sm:py-16">
           <p className="text-sm font-medium tracking-[0.08em] text-emerald-700/80 uppercase">
             Saint-Avold se transforme
           </p>
@@ -225,6 +302,8 @@ function UnderstandStage({
   answers,
   direction,
   onAnswerChange,
+  onLocationChange,
+  onLocationDetailChange,
   onNext,
   onBack,
   onStepClick,
@@ -232,34 +311,39 @@ function UnderstandStage({
   questionIndex: number;
   answers: Answers;
   direction: "forward" | "back";
-  onAnswerChange: (questionId: QuestionId, value: string[] | string) => void;
+  onAnswerChange: (
+    questionId: Exclude<QuestionId, "location">,
+    value: string[] | string,
+  ) => void;
+  onLocationChange: (choice: Exclude<LocationChoice, "">) => void;
+  onLocationDetailChange: (detail: string) => void;
   onNext: () => void;
   onBack: () => void;
   onStepClick: (index: number) => void;
 }) {
   const question = QUESTIONS[questionIndex];
+  const isLocation = question.id === "location";
   const isOptional = question.id === "optional";
-  const selected = isOptional
-    ? (answers.optional as string)
-    : (answers[question.id] as string[]);
 
   const toggleOption = (optionId: string) => {
-    if (isOptional) return;
-    const current = answers[question.id] as string[];
+    if (isOptional || isLocation) return;
+    const key = question.id as Exclude<QuestionId, "location" | "optional">;
+    const current = answers[key] as string[];
     const next = current.includes(optionId)
       ? current.filter((id) => id !== optionId)
       : [...current, optionId];
-    onAnswerChange(question.id, next);
+    onAnswerChange(key, next);
   };
 
   const canNext = canAdvanceQuestion(question.id, answers);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-10 sm:px-8">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-8 sm:px-8">
       <div
         key={question.id}
         className={[
           QUESTIONNAIRE_CARD,
+          "min-h-[28rem]",
           direction === "forward"
             ? "animate-question-enter"
             : "animate-question-enter-back",
@@ -271,62 +355,71 @@ function UnderstandStage({
           onStepClick={onStepClick}
         />
 
-        <div className="mb-6">
+        <div className="mb-5">
           <h2 className="max-w-lg text-xl font-semibold leading-snug tracking-tight text-zinc-900 md:text-2xl">
             {question.prompt}
           </h2>
           {question.subtitle && (
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-zinc-500">
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-500">
               {question.subtitle}
             </p>
           )}
         </div>
 
-        {isOptional ? (
-          <textarea
-            value={selected}
-            onChange={(e) => onAnswerChange("optional", e.target.value)}
-            rows={4}
-            placeholder="Par exemple : une contrainte géographique, une passion, une hésitation sur votre orientation…"
-            className="w-full resize-none rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-relaxed text-zinc-900 placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-          />
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
-            {question.options!.map((option) => (
-              <SelectableCard
-                key={option.id}
-                label={option.label}
-                selected={(selected as string[]).includes(option.id)}
-                onToggle={() => toggleOption(option.id)}
-                compact
+        <div className="flex-1">
+          {isLocation ? (
+            <div className="space-y-3">
+              <LocationChoiceCard
+                title="Saint-Avold"
+                subtitle="Bassin industriel historique"
+                selected={answers.location === "saint-avold"}
+                onSelect={() => onLocationChange("saint-avold")}
               />
-            ))}
-          </div>
-        )}
-
-        <div className="mt-8 flex items-center justify-between gap-4 border-t border-zinc-100 pt-6">
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={questionIndex === 0}
-            className="rounded-xl px-4 py-2.5 text-sm font-medium text-zinc-500 transition-all duration-200 hover:bg-zinc-100/80 hover:text-zinc-700 disabled:invisible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300"
-          >
-            Retour
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!canNext}
-            className={[
-              "rounded-2xl px-8 py-3.5 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2",
-              canNext
-                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/15 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg"
-                : "cursor-not-allowed bg-zinc-200/80 text-zinc-400",
-            ].join(" ")}
-          >
-            {questionIndex === QUESTIONS.length - 1 ? "Continuer" : "Suivant"}
-          </button>
+              <LocationChoiceCard
+                title="Autre ville / Mission Locale / E2C"
+                subtitle="Précisez votre ville ou établissement"
+                selected={answers.location === "other"}
+                onSelect={() => onLocationChange("other")}
+              >
+                <input
+                  type="text"
+                  value={answers.locationDetail}
+                  onChange={(e) => onLocationDetailChange(e.target.value)}
+                  placeholder="Ex. Metz, Mission Locale de Forbach, E2C…"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 transition-colors focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+              </LocationChoiceCard>
+            </div>
+          ) : isOptional ? (
+            <textarea
+              value={answers.optional}
+              onChange={(e) => onAnswerChange("optional", e.target.value)}
+              rows={4}
+              placeholder="Par exemple : une contrainte géographique, une passion, une hésitation sur votre orientation…"
+              className="w-full resize-none rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm leading-relaxed text-zinc-900 placeholder:text-zinc-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-2.5">
+              {question.options!.map((option) => (
+                <SelectableCard
+                  key={option.id}
+                  label={option.label}
+                  selected={(answers[question.id as Exclude<QuestionId, "location" | "optional">] as string[]).includes(option.id)}
+                  onToggle={() => toggleOption(option.id)}
+                  compact
+                />
+              ))}
+            </div>
+          )}
         </div>
+
+        <QuestionNavigation
+          onBack={onBack}
+          onNext={onNext}
+          backDisabled={questionIndex === 0}
+          nextDisabled={!canNext}
+          nextLabel={questionIndex === QUESTIONS.length - 1 ? "Continuer" : "Suivant"}
+        />
       </div>
     </main>
   );
@@ -687,11 +780,30 @@ export default function LavenirExperience() {
   const [personalSummary, setPersonalSummary] = useState("");
 
   const handleAnswerChange = useCallback(
-    (questionId: QuestionId, value: string[] | string) => {
+    (questionId: Exclude<QuestionId, "location">, value: string[] | string) => {
       setAnswers((prev) => ({ ...prev, [questionId]: value }));
     },
     [],
   );
+
+  const handleLocationChange = useCallback(
+    (choice: Exclude<LocationChoice, "">) => {
+      setAnswers((prev) => ({
+        ...prev,
+        location: choice,
+        locationDetail: choice === "saint-avold" ? "" : prev.locationDetail,
+      }));
+    },
+    [],
+  );
+
+  const handleLocationDetailChange = useCallback((detail: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      location: "other",
+      locationDetail: detail,
+    }));
+  }, []);
 
   const goToQuestion = (index: number) => {
     setDirection(index < questionIndex ? "back" : "forward");
@@ -750,6 +862,8 @@ export default function LavenirExperience() {
           answers={answers}
           direction={direction}
           onAnswerChange={handleAnswerChange}
+          onLocationChange={handleLocationChange}
+          onLocationDetailChange={handleLocationDetailChange}
           onNext={handleUnderstandNext}
           onBack={handleUnderstandBack}
           onStepClick={goToQuestion}

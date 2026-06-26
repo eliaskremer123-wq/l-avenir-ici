@@ -7,13 +7,24 @@ export type Stage =
   | "continue";
 
 export type QuestionId =
+  | "location"
   | "workStyle"
   | "curiosity"
   | "environment"
   | "motivation"
   | "optional";
 
-export type Answers = Record<QuestionId, string[] | string>;
+export type LocationChoice = "saint-avold" | "other" | "";
+
+export type Answers = {
+  location: LocationChoice;
+  locationDetail: string;
+  workStyle: string[];
+  curiosity: string[];
+  environment: string[];
+  motivation: string[];
+  optional: string;
+};
 
 export type QuestionOption = {
   id: string;
@@ -29,6 +40,7 @@ export type Question = {
   subtitle?: string;
   multi: boolean;
   optional?: boolean;
+  variant?: "location";
   options?: QuestionOption[];
 };
 

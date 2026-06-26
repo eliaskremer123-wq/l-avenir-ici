@@ -7,7 +7,7 @@ function getReflectionPhrases(answers: Answers): string[] {
   const phrases: string[] = [];
 
   for (const question of QUESTIONS) {
-    if (!question.options) continue;
+    if (question.id === "location" || !question.options) continue;
     const value = answers[question.id];
     if (!Array.isArray(value)) continue;
 
@@ -41,7 +41,7 @@ export function computeRecommendations(answers: Answers): Recommendation[] {
   for (const project of PROJECTS) scores[project.id] = 0;
 
   for (const question of QUESTIONS) {
-    if (!question.options) continue;
+    if (question.id === "location" || !question.options) continue;
     const value = answers[question.id];
     if (!Array.isArray(value)) continue;
 
@@ -92,10 +92,21 @@ export function buildPersonalSummary(
   return `Ce qui ressort de vos réponses, c'est une personne attirée par ${traits}. Ce n'est pas un hasard si ${top.name} apparaît en tête : cette filière ${top.sector.toLowerCase()} répond à la fois à vos envies et aux grands chantiers du territoire.${optionalNote} Vous n'avez pas à vous figer aujourd'hui — mais vous pouvez déjà vous projeter.`;
 }
 
+export function getResolvedLocation(answers: Answers): string {
+  if (answers.location === "saint-avold") return "Saint-Avold";
+  if (answers.location === "other") return answers.locationDetail.trim();
+  return "";
+}
+
 export function getQuestionAnswerCount(
   questionId: QuestionId,
   answers: Answers,
 ): number {
+  if (questionId === "location") {
+    if (answers.location === "saint-avold") return 1;
+    if (answers.location === "other" && answers.locationDetail.trim()) return 1;
+    return 0;
+  }
   if (questionId === "optional") {
     return typeof answers.optional === "string" && answers.optional.trim()
       ? 1
@@ -109,8 +120,15 @@ export function canAdvanceQuestion(
   questionId: QuestionId,
   answers: Answers,
 ): boolean {
+  if (questionId === "location") {
+    if (answers.location === "saint-avold") return true;
+    if (answers.location === "other") return answers.locationDetail.trim().length > 0;
+    return false;
+  }
+
   const question = QUESTIONS.find((q) => q.id === questionId);
   if (!question) return false;
   if (question.optional) return true;
-  return getQuestionAnswerCount(questionId, answers) > 0;
+  const value = answers[questionId as Exclude<QuestionId, "location">];
+  return Array.isArray(value) ? value.length > 0 : false;
 }

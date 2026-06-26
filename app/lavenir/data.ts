@@ -2,6 +2,14 @@ import type { Project, Question, TerritoryTopic } from "./types";
 
 export const QUESTIONS: Question[] = [
   {
+    id: "location",
+    dimension: "Votre territoire",
+    prompt: "Où étudiez-vous ou habitez-vous ?",
+    subtitle: "Cela nous aide à situer vos opportunités dans le bon contexte.",
+    multi: false,
+    variant: "location",
+  },
+  {
     id: "workStyle",
     dimension: "Votre façon de travailler",
     prompt: "Quand vous sentez-vous le plus engagé(e) ?",

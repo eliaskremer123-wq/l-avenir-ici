@@ -1,7 +1,27 @@
-import { ANALYSIS_STEPS, PROJECTS, QUESTIONS } from "./data";
-import type { Answers, QuestionId, Recommendation } from "./types";
+import { ANALYSIS_STEPS, getProjectsSync, QUESTIONS } from "./data";
+import type { Answers, Project, QuestionId, Recommendation } from "./types";
 
 export { ANALYSIS_STEPS };
+
+function normalizeCity(city: string): string {
+  return city.trim().toLocaleLowerCase("fr");
+}
+
+/** Filters projects by city before ranking. Falls back to the full set when no city or no matches. */
+export function filterProjectsByCity(
+  projects: Project[],
+  city?: string,
+): Project[] {
+  const normalized = city?.trim();
+  if (!normalized) return projects;
+
+  const needle = normalizeCity(normalized);
+  const filtered = projects.filter(
+    (project) => normalizeCity(project.locationCity) === needle,
+  );
+
+  return filtered.length > 0 ? filtered : projects;
+}
 
 function getReflectionPhrases(answers: Answers): string[] {
   const phrases: string[] = [];
@@ -37,8 +57,10 @@ export function buildReflection(answers: Answers): string {
 }
 
 export function computeRecommendations(answers: Answers): Recommendation[] {
+  const city = getResolvedLocation(answers);
+  const projects = filterProjectsByCity(getProjectsSync(), city);
   const scores: Record<string, number> = {};
-  for (const project of PROJECTS) scores[project.id] = 0;
+  for (const project of projects) scores[project.id] = 0;
 
   for (const question of QUESTIONS) {
     if (question.id === "location" || !question.options) continue;
@@ -49,6 +71,7 @@ export function computeRecommendations(answers: Answers): Recommendation[] {
       const option = question.options.find((o) => o.id === optionId);
       if (!option) continue;
       for (const [projectId, weight] of Object.entries(option.projectWeights)) {
+        if (!(projectId in scores)) continue;
         scores[projectId] = (scores[projectId] ?? 0) + (weight ?? 0);
       }
     }
@@ -61,7 +84,7 @@ export function computeRecommendations(answers: Answers): Recommendation[] {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3)
     .map(([projectId, score]) => {
-      const project = PROJECTS.find((p) => p.id === projectId)!;
+      const project = projects.find((p) => p.id === projectId)!;
       const template =
         project.matchTemplates[score % project.matchTemplates.length];
       return {
@@ -78,7 +101,7 @@ export function buildPersonalSummary(
 ): string {
   const phrases = getReflectionPhrases(answers);
   const traits = formatPhraseList(phrases.slice(0, 3));
-  const top = PROJECTS.find((p) => p.id === recommendations[0]?.projectId);
+  const top = getProjectsSync().find((p) => p.id === recommendations[0]?.projectId);
 
   const optionalNote =
     typeof answers.optional === "string" && answers.optional.trim()

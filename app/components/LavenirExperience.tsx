@@ -549,6 +549,39 @@ function AnalyzeStage({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+function PreparationBlock({
+  preparationSteps,
+}: {
+  preparationSteps: string[];
+}) {
+  return (
+    <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-5 py-5">
+      <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+        Comment vous préparer dès aujourd&apos;hui
+      </p>
+      <ul className="space-y-3">
+        {preparationSteps.map((step) => (
+          <li key={step} className="flex gap-3 text-sm leading-relaxed text-zinc-700">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-700">
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function RecommendationCard({
   recommendation,
   project,
@@ -585,7 +618,7 @@ function RecommendationCard({
       <div className="mt-8 space-y-6">
         <div>
           <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700/70">
-            Pourquoi cela vous correspond
+            Pourquoi cette piste apparaît
           </p>
           <p className="text-sm leading-loose text-zinc-700">
             {recommendation.personalMatch}
@@ -608,7 +641,7 @@ function RecommendationCard({
 
         <div>
           <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            Compétences à cultiver dès maintenant
+            Compétences souvent développées
           </p>
           <ul className="space-y-2">
             {project.skills.map((skill) => (
@@ -619,6 +652,8 @@ function RecommendationCard({
             ))}
           </ul>
         </div>
+
+        <PreparationBlock preparationSteps={project.preparationSteps} />
 
         <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/70 px-5 py-4 backdrop-blur-sm">
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">

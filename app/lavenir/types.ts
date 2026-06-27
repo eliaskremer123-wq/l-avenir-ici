@@ -59,6 +59,12 @@ export type Project = {
   timeline: string;
   matchTemplates: string[];
   learnMore: string;
+  locationCity: string;
+  locationLabel: string;
+  preparationSteps: string[];
+  futureSkills: string[];
+  sectorTags: string[];
+  constraints: string[];
 };
 
 export type TerritoryTopic = {

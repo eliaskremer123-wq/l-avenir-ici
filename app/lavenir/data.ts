@@ -242,6 +242,21 @@ export const PROJECTS: Project[] = [
     ],
     learnMore:
       "Renseignez-vous sur les filières énergie, procédés industriels et transition écologique proposées près de Saint-Avold.",
+    locationCity: "Saint-Avold",
+    locationLabel: "Bassin de Saint-Avold",
+    preparationSteps: [
+      "Participer activement aux projets de groupe à l'E2C ou en Mission Locale.",
+      "Suivre des contenus sur l'énergie et la transition écologique (vidéos, articles, podcasts).",
+      "Demander à effectuer une visite d'entreprise ou de site industriel dans ce secteur.",
+    ],
+    futureSkills: [
+      "adaptability",
+      "communication",
+      "digital literacy",
+      "problem solving",
+    ],
+    sectorTags: ["hydrogen", "energy", "green-transition"],
+    constraints: ["Shift work", "PPE required", "Industrial site access"],
   },
   {
     id: "chemistry",
@@ -265,6 +280,21 @@ export const PROJECTS: Project[] = [
     ],
     learnMore:
       "Explorez les CAP/BTS chimie, environnement ou production industrielle dans le bassin mosellan.",
+    locationCity: "Saint-Avold",
+    locationLabel: "Bassin de Saint-Avold",
+    preparationSteps: [
+      "Renforcer les bases en sciences (chimie, environnement) via les ressources proposées par votre établissement.",
+      "Participer à des ateliers ou projets liés au recyclage et à la durabilité.",
+      "Échanger avec un conseiller E2C ou Mission Locale sur les filières chimie et environnement.",
+    ],
+    futureSkills: [
+      "problem solving",
+      "communication",
+      "adaptability",
+      "digital literacy",
+    ],
+    sectorTags: ["chemistry", "green-transition"],
+    constraints: ["Shift work", "PPE required", "Laboratory protocols"],
   },
   {
     id: "maintenance",
@@ -288,6 +318,21 @@ export const PROJECTS: Project[] = [
     ],
     learnMore:
       "Découvrez les formations en maintenance, électrotechnique et mécanique industrielle.",
+    locationCity: "Saint-Avold",
+    locationLabel: "Bassin de Saint-Avold",
+    preparationSteps: [
+      "S'initier à la mécanique ou à l'électrotechnique via des modules courts ou stages découverte.",
+      "Développer la rigueur et la sécurité en atelier lors des travaux pratiques à l'E2C.",
+      "Se renseigner sur les entreprises industrielles locales qui recrutent en maintenance.",
+    ],
+    futureSkills: [
+      "problem solving",
+      "adaptability",
+      "communication",
+      "digital literacy",
+    ],
+    sectorTags: ["maintenance", "energy"],
+    constraints: ["Shift work", "Outdoor work", "PPE required"],
   },
   {
     id: "logistics",
@@ -311,6 +356,21 @@ export const PROJECTS: Project[] = [
     ],
     learnMore:
       "Consultez les formations en transport-logistique et supply chain de la région.",
+    locationCity: "Forbach",
+    locationLabel: "Nord Mosellan",
+    preparationSteps: [
+      "Travailler l'organisation et la gestion de projet dans vos activités scolaires ou associatives.",
+      "Se familiariser avec les outils bureautiques et numériques de suivi et de planification.",
+      "Demander une immersion ou une journée découverte dans une entreprise de transport ou d'entrepôt.",
+    ],
+    futureSkills: [
+      "communication",
+      "digital literacy",
+      "adaptability",
+      "problem solving",
+    ],
+    sectorTags: ["logistics", "maintenance"],
+    constraints: ["Shift work", "Outdoor work"],
   },
   {
     id: "infrastructure",
@@ -334,8 +394,33 @@ export const PROJECTS: Project[] = [
     ],
     learnMore:
       "Renseignez-vous sur le BTP énergétique et l'électrotechnique dans les lycées professionnels voisins.",
+    locationCity: "Metz",
+    locationLabel: "Métropole messine",
+    preparationSteps: [
+      "Explorer les bases de l'électricité et du BTP via des modules proposés en lycée pro ou E2C.",
+      "Renforcer le travail en équipe sur des projets de chantier simulés ou encadrés.",
+      "Contacter un lycée professionnel voisin pour une visite de filière électrotechnique ou énergétique.",
+    ],
+    futureSkills: [
+      "adaptability",
+      "problem solving",
+      "communication",
+      "digital literacy",
+    ],
+    sectorTags: ["energy", "green-transition"],
+    constraints: ["Outdoor work", "PPE required", "Shift work"],
   },
 ];
+
+/** Mock data source — replace with API/Sheets fetch without changing consumers. */
+export async function getProjects(): Promise<Project[]> {
+  return PROJECTS;
+}
+
+/** Synchronous project access for matching until recommendation flow is async. */
+export function getProjectsSync(): Project[] {
+  return PROJECTS;
+}
 
 export const TERRITORY_TOPICS: TerritoryTopic[] = [
   {

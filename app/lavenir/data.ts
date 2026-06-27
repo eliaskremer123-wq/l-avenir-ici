@@ -216,7 +216,7 @@ export const ANALYSIS_STEPS = [
   "Explorer les projets industriels",
   "Repérer les compétences partagées",
   "Trouver des connexions significatives",
-  "Préparer vos recommandations",
+  "Préparer vos pistes à explorer",
 ];
 
 export const PROJECTS: Project[] = [
@@ -235,10 +235,10 @@ export const PROJECTS: Project[] = [
       "Sensibilité aux enjeux environnementaux",
     ],
     timeline:
-      "Les premières formations et stages se multiplient dès les prochaines années, avec une montée en charge progressive du site.",
+      "Les premières formations, visites et découvertes de terrain se multiplient dès les prochaines années, avec une montée en charge progressive du site.",
     matchTemplates: [
-      "Votre attrait pour {traits} trouve un écho direct dans un projet qui redéfinit l'énergie de la région.",
-      "Ce hub énergétique a besoin de profils curieux et engagés — comme vous semblez l'être sur {traits}.",
+      "Votre attrait pour {traits} peut rendre cette transition énergétique particulièrement intéressante à explorer.",
+      "Ce hub énergétique ouvre des questions concrètes autour de {traits}, qui correspondent aux intérêts que vous avez partagés.",
     ],
     learnMore:
       "Renseignez-vous sur les filières énergie, procédés industriels et transition écologique proposées près de Saint-Avold.",
@@ -275,8 +275,8 @@ export const PROJECTS: Project[] = [
     timeline:
       "La reconversion des sites chimiques s'étale sur la décennie — le moment idéal pour se former en amont.",
     matchTemplates: [
-      "Votre intérêt pour {traits} correspond à une filière qui repense la production sans gaspiller.",
-      "La chimie circulaire valorise exactement le type de curiosité que vous avez décrit : {traits}.",
+      "Votre intérêt pour {traits} peut vous aider à comprendre une filière qui repense la production sans gaspiller.",
+      "La chimie circulaire est une transformation à découvrir si vous souhaitez explorer {traits}.",
     ],
     learnMore:
       "Explorez les CAP/BTS chimie, environnement ou production industrielle dans le bassin mosellan.",
@@ -311,10 +311,10 @@ export const PROJECTS: Project[] = [
       "Réactivité et sens du service",
     ],
     timeline:
-      "Chaque nouveau site industriel crée des besoins immédiats — c'est un métier d'avenir ancré dans le territoire.",
+      "Chaque nouveau site industriel rend ces savoir-faire plus visibles dans le territoire, avec des parcours à découvrir progressivement.",
     matchTemplates: [
-      "Vous aimez {traits} : la maintenance industrielle, c'est exactement ça — utile, concret, indispensable.",
-      "Les sites en reconversion ont besoin de profils comme le vôtre, orientés vers {traits}.",
+      "Si vous aimez {traits}, la maintenance industrielle peut être une piste concrète à observer de plus près.",
+      "Les sites en reconversion permettent d'explorer des activités liées à {traits}, sans vous enfermer dans un choix immédiat.",
     ],
     learnMore:
       "Découvrez les formations en maintenance, électrotechnique et mécanique industrielle.",
@@ -323,7 +323,7 @@ export const PROJECTS: Project[] = [
     preparationSteps: [
       "S'initier à la mécanique ou à l'électrotechnique via des modules courts ou stages découverte.",
       "Développer la rigueur et la sécurité en atelier lors des travaux pratiques à l'E2C.",
-      "Se renseigner sur les entreprises industrielles locales qui recrutent en maintenance.",
+      "Se renseigner sur les entreprises industrielles locales pour mieux comprendre la maintenance.",
     ],
     futureSkills: [
       "problem solving",
@@ -349,10 +349,10 @@ export const PROJECTS: Project[] = [
       "Fiabilité et sens du détail",
     ],
     timeline:
-      "La relocalisation industrielle stimule la logistique dès maintenant — des postes accessibles avec formation.",
+      "La relocalisation industrielle rend la logistique plus visible dès maintenant, avec des formations et immersions possibles.",
     matchTemplates: [
-      "Votre goût pour {traits} s'aligne avec une logistique en pleine expansion autour de Saint-Avold.",
-      "Coordonner les flux demande exactement ce que vous valorisez : {traits}.",
+      "Votre goût pour {traits} peut rendre la logistique régionale intéressante à explorer.",
+      "Comprendre les flux peut être une manière concrète d'approfondir {traits}.",
     ],
     learnMore:
       "Consultez les formations en transport-logistique et supply chain de la région.",
@@ -389,8 +389,8 @@ export const PROJECTS: Project[] = [
     timeline:
       "La modernisation des réseaux accompagne chaque nouveau projet — un chantier de long terme, riche en opportunités.",
     matchTemplates: [
-      "Votre affinité pour {traits} rejoint les besoins concrets des infrastructures qui alimentent l'industrie locale.",
-      "Bâtir l'avenir énergétique de la région, c'est mobiliser des profils attirés par {traits}.",
+      "Votre affinité pour {traits} peut vous aider à explorer les infrastructures qui alimentent l'industrie locale.",
+      "Les réseaux énergétiques offrent une piste pour comprendre comment {traits} se traduit dans des projets de territoire.",
     ],
     learnMore:
       "Renseignez-vous sur le BTP énergétique et l'électrotechnique dans les lycées professionnels voisins.",
@@ -429,7 +429,7 @@ export const TERRITORY_TOPICS: TerritoryTopic[] = [
     summary:
       "Carling-Saint-Avold se positionne comme un pôle énergétique majeur en Lorraine.",
     detail:
-      "La production d'hydrogène vert vise à décarboner l'industrie locale et à créer des emplois qualifiés dans l'énergie de demain — un tournant visible depuis chez vous.",
+      "La production d'hydrogène vert vise à décarboner l'industrie locale et à faire émerger de nouvelles compétences dans l'énergie de demain — un tournant visible depuis chez vous.",
   },
   {
     id: "chemistry",
@@ -437,7 +437,7 @@ export const TERRITORY_TOPICS: TerritoryTopic[] = [
     summary:
       "Les anciens sites chimiques se transforment pour recycler et valoriser les matériaux.",
     detail:
-      "Plutôt que de tout jeter, l'industrie repense ses cycles : moins de déchets, plus d'emplois techniques, et une filière qui a du sens pour l'environnement.",
+      "Plutôt que de tout jeter, l'industrie repense ses cycles : moins de déchets, plus de savoir-faire techniques à découvrir, et une filière qui a du sens pour l'environnement.",
   },
   {
     id: "transition",
@@ -453,6 +453,6 @@ export const TERRITORY_TOPICS: TerritoryTopic[] = [
     summary:
       "Des milliards d'euros sont engagés pour reconstruire la base industrielle régionale.",
     detail:
-      "Ces projets ne sont pas abstraits : ils signifient des formations, des stages, des entreprises qui recrutent — et une place possible pour les jeunes du territoire.",
+      "Ces projets ne sont pas abstraits : ils signifient des formations, des stages, des immersions et des secteurs à explorer pour les jeunes du territoire.",
   },
 ];

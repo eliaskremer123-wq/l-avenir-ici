@@ -44,23 +44,23 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-full flex-col font-sans text-zinc-900">
       <ExperienceBackdrop />
-      <header className="glass-header sticky top-0 z-20">
+      <header className="sticky top-0 z-20">
         <div className="relative mx-auto flex max-w-3xl items-center justify-between px-6 py-5 sm:px-10">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600/10 ring-1 ring-emerald-600/10">
               <div className="h-2 w-2 rounded-full bg-emerald-600" />
             </div>
-            <span className="text-sm font-semibold tracking-tight text-zinc-800">
+            <span className="text-sm font-semibold tracking-tight text-zinc-100">
               L&apos;Avenir Ici
             </span>
           </div>
-          <span className="text-xs tracking-wide text-zinc-400">Saint-Avold</span>
+          <span className="text-xs tracking-wide text-zinc-300">Saint-Avold</span>
         </div>
       </header>
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
-      <footer className="glass-header relative z-10 mt-auto border-b-0 border-t">
+      <footer className="relative z-10 mt-auto border-b-0 border-t">
         <div className="mx-auto max-w-3xl px-6 py-6 sm:px-10">
-          <p className="text-center text-xs leading-relaxed text-zinc-400">
+          <p className="text-center text-xs leading-relaxed text-zinc-300">
             Un outil civique pour comprendre — et se projeter dans — l&apos;avenir
             industriel de Saint-Avold
           </p>
@@ -557,7 +557,7 @@ function PreparationBlock({
   return (
     <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-5 py-5">
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
-        Comment vous préparer dès aujourd&apos;hui
+        Comment commencer à vous préparer
       </p>
       <ul className="space-y-3">
         {preparationSteps.map((step) => (
@@ -606,7 +606,7 @@ function RecommendationCard({
 
       {isTopMatch && (
         <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-emerald-700">
-          Votre meilleur match
+          Une piste à explorer
         </p>
       )}
 
@@ -618,7 +618,7 @@ function RecommendationCard({
       <div className="mt-8 space-y-6">
         <div>
           <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700/70">
-            Pourquoi cette piste apparaît
+            Pourquoi cette transition pourrait vous intéresser
           </p>
           <p className="text-sm leading-loose text-zinc-700">
             {recommendation.personalMatch}
@@ -627,7 +627,7 @@ function RecommendationCard({
 
         <div>
           <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            Métiers possibles
+            Métiers à découvrir
           </p>
           <ul className="space-y-2">
             {project.careers.map((career) => (
@@ -666,7 +666,7 @@ function RecommendationCard({
           type="button"
           className="mt-1 w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
         >
-          En savoir plus
+          Explorer ce secteur
         </button>
       </div>
     </article>
@@ -700,11 +700,11 @@ function DiscoverStage({
 
         <div className="mt-20">
           <h3 className="text-xl font-semibold tracking-tight text-zinc-900">
-            Opportunités recommandées
+            Transformations à explorer
           </h3>
           <p className="mt-3 max-w-lg text-sm leading-loose text-zinc-500">
-            Trois pistes choisies pour vous — pas des offres d&apos;emploi, mais des
-            directions concrètes à explorer.
+            Ces transformations régionales correspondent aux intérêts que vous
+            avez partagés.
           </p>
           <div className="mt-8 space-y-6">
             {recommendations.map((rec, i) => {

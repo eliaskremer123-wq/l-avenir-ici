@@ -109,10 +109,10 @@ export function buildPersonalSummary(
       : "";
 
   if (!top) {
-    return `Votre profil mêle ${traits}. Saint-Avold construit justement les filières où ce type de curiosité peut s'exprimer.${optionalNote}`;
+    return `Vos réponses font ressortir un intérêt pour ${traits}. Certaines transformations régionales peuvent être intéressantes à explorer à partir de cette curiosité.${optionalNote}`;
   }
 
-  return `Ce qui ressort de vos réponses, c'est une personne attirée par ${traits}. Ce n'est pas un hasard si ${top.name} apparaît en tête : cette filière ${top.sector.toLowerCase()} répond à la fois à vos envies et aux grands chantiers du territoire.${optionalNote} Vous n'avez pas à vous figer aujourd'hui — mais vous pouvez déjà vous projeter.`;
+  return `Ce qui ressort de vos réponses, c'est un intérêt pour ${traits}. ${top.name} fait partie des transformations régionales qui correspondent aux intérêts que vous avez partagés, notamment autour de ${top.sector.toLowerCase()}.${optionalNote} Vous n'avez pas à vous figer aujourd'hui — mais vous pouvez déjà explorer ce que ce secteur pourrait vous apprendre.`;
 }
 
 export function getResolvedLocation(answers: Answers): string {

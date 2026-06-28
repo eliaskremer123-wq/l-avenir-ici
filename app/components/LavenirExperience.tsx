@@ -7,8 +7,6 @@ import {
   buildReflection,
   canAdvanceQuestion,
   computeRecommendations,
-  filterProjectsByCity,
-  getResolvedLocation,
 } from "../lavenir/matching";
 import type {
   Answers,
@@ -646,24 +644,26 @@ function RecommendationCard({
       )}
 
       <div className="mt-8 space-y-6">
-        <div>
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700/70">
-            Pourquoi cette transition pourrait vous intéresser
-          </p>
-          <p className="text-sm leading-loose text-zinc-700">
-            {recommendation.personalMatch}
-          </p>
-        </div>
+        {recommendation.personalMatch && (
+          <div>
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+              Pourquoi explorer cette piste
+            </p>
+            <p className="text-sm leading-loose text-zinc-700">
+              {recommendation.personalMatch}
+            </p>
+          </div>
+        )}
 
         {careers.length > 0 && (
           <div>
-            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
               Métiers à découvrir
             </p>
             <ul className="space-y-2">
               {careers.map((career) => (
-                <li key={career} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-600">
-                  <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
+                <li key={career} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-700">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {career}
                 </li>
               ))}
@@ -673,13 +673,13 @@ function RecommendationCard({
 
         {skills.length > 0 && (
           <div>
-            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
               Compétences souvent développées
             </p>
             <ul className="space-y-2">
               {skills.map((skill) => (
-                <li key={skill} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-600">
-                  <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
+                <li key={skill} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-700">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {skill}
                 </li>
               ))}
@@ -690,11 +690,11 @@ function RecommendationCard({
         {steps.length > 0 && <PreparationBlock preparationSteps={steps} />}
 
         {timeline && (
-          <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/70 px-5 py-4 backdrop-blur-sm">
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+          <div className="rounded-2xl border border-zinc-200/60 bg-white/70 px-5 py-4 backdrop-blur-sm">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
               Horizon
             </p>
-            <p className="text-sm leading-loose text-zinc-600">{timeline}</p>
+            <p className="text-sm leading-loose text-zinc-700">{timeline}</p>
           </div>
         )}
 
@@ -713,79 +713,33 @@ function RecommendationCard({
   );
 }
 
-// Maps each curated recommendation theme to the sector vocabulary used in the
-// live sheet, so the displayed cards bind to real sheet projects.
-const RECOMMENDATION_SECTOR_KEYWORDS: Record<string, string> = {
-  hydrogen: "energie",
-  infrastructure: "energie",
-  chemistry: "chimie",
-  maintenance: "industrie",
-  logistics: "logistique",
-};
-
-function normalizeSector(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-/**
- * Binds each recommendation to a real project from the API catalog (city-filtered),
- * preferring an exact id match, then a same-sector match, then any remaining
- * project. Falls back to the local dataset only as a last resort so a card is
- * never blank. This is display data-binding only — the matching engine is
- * untouched.
- */
-function resolveRecommendationProjects(
-  recommendations: Recommendation[],
-  apiProjects: Project[],
-  resolvedCity: string,
-): { recommendation: Recommendation; project: Project }[] {
-  const pool = filterProjectsByCity(apiProjects, resolvedCity);
-  const used = new Set<string>();
-  const resolved: { recommendation: Recommendation; project: Project }[] = [];
-
-  for (const recommendation of recommendations) {
-    const keyword = RECOMMENDATION_SECTOR_KEYWORDS[recommendation.projectId];
-    const project =
-      pool.find((p) => !used.has(p.id) && p.id === recommendation.projectId) ??
-      (keyword
-        ? pool.find(
-            (p) => !used.has(p.id) && normalizeSector(p.sector).includes(keyword),
-          )
-        : undefined) ??
-      pool.find((p) => !used.has(p.id)) ??
-      PROJECTS.find((p) => p.id === recommendation.projectId);
-
-    if (!project) continue;
-    used.add(project.id);
-    resolved.push({ recommendation, project });
-  }
-
-  return resolved;
-}
-
 function DiscoverStage({
   personalSummary,
   recommendations,
   projects,
   projectsStatus,
-  resolvedCity,
   onContinue,
 }: {
   personalSummary: string;
   recommendations: Recommendation[];
   projects: Project[];
   projectsStatus: "loading" | "ready" | "error";
-  resolvedCity: string;
   onContinue: () => void;
 }) {
-  const resolvedRecommendations = resolveRecommendationProjects(
-    recommendations,
-    projects,
-    resolvedCity,
-  );
+  // Recommendations are ranked directly over the live /api/projects catalog, so
+  // each one binds to its real project by id. The local dataset is used only as
+  // a last-resort safety fallback so a card is never blank.
+  const resolvedRecommendations = recommendations
+    .map((recommendation) => {
+      const project =
+        projects.find((p) => p.id === recommendation.projectId) ??
+        PROJECTS.find((p) => p.id === recommendation.projectId);
+      return project ? { recommendation, project } : null;
+    })
+    .filter(
+      (entry): entry is { recommendation: Recommendation; project: Project } =>
+        entry !== null,
+    );
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-16 sm:px-10 sm:py-24">
       <FadeIn>
@@ -796,19 +750,19 @@ function DiscoverStage({
         </div>
 
         <div className={`${GLASS_PANEL} mx-auto mt-14 max-w-2xl px-8 py-10 sm:px-10 sm:py-12`}>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            Votre portrait
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-600">
+            D&apos;après vos sélections
           </p>
           <p className="mt-5 text-base leading-loose text-zinc-700">{personalSummary}</p>
         </div>
 
         <div className="mt-20">
           <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
-            Transformations à explorer
+            Secteurs à explorer
           </h3>
           <p className="mt-3 max-w-lg text-sm leading-loose text-zinc-300">
-            Ces transformations régionales correspondent aux intérêts que vous
-            avez partagés.
+            Des transitions industrielles réelles, actuellement en cours dans la
+            région de Saint-Avold.
           </p>
           {projectsStatus === "loading" && (
             <p className="mt-4 text-xs text-zinc-300">Chargement des données…</p>
@@ -1004,11 +958,11 @@ export default function LavenirExperience() {
   };
 
   const handleAnalyzeComplete = useCallback(() => {
-    const recs = computeRecommendations(answers);
+    const recs = computeRecommendations(answers, projects);
     setRecommendations(recs);
-    setPersonalSummary(buildPersonalSummary(answers, recs));
+    setPersonalSummary(buildPersonalSummary());
     setStage("discover");
-  }, [answers]);
+  }, [answers, projects]);
 
   const handleRestart = () => {
     setStage("welcome");
@@ -1062,7 +1016,6 @@ export default function LavenirExperience() {
           recommendations={recommendations}
           projects={projects}
           projectsStatus={projectsStatus}
-          resolvedCity={getResolvedLocation(answers)}
           onContinue={() => setStage("continue")}
         />
       )}

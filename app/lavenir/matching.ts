@@ -1,13 +1,24 @@
-import { ANALYSIS_STEPS, getProjectsSync, QUESTIONS } from "./data";
+import { ANALYSIS_STEPS, QUESTIONS } from "./data";
 import type { Answers, Project, QuestionId, Recommendation } from "./types";
 
 export { ANALYSIS_STEPS };
+
+const MAX_RESULTS = 5;
+
+// Field weights for data-grounded scoring. Higher = stronger signal.
+const FIELD_WEIGHTS = {
+  sector: 3,
+  skills: 2,
+  careers: 1,
+  description: 1,
+  city: 1,
+} as const;
 
 function normalizeCity(city: string): string {
   return city.trim().toLocaleLowerCase("fr");
 }
 
-/** Filters projects by city before ranking. Falls back to the full set when no city or no matches. */
+/** Kept for compatibility; no longer used to hard-filter recommendations. */
 export function filterProjectsByCity(
   projects: Project[],
   city?: string,
@@ -23,8 +34,33 @@ export function filterProjectsByCity(
   return filtered.length > 0 ? filtered : projects;
 }
 
-function getReflectionPhrases(answers: Answers): string[] {
-  const phrases: string[] = [];
+const STOPWORDS = new Set([
+  "avec", "dans", "pour", "vous", "votre", "vos", "des", "les", "une", "sur",
+  "aux", "qui", "que", "ces", "sont", "plus", "aussi", "leur", "leurs", "etre",
+  "sans", "par", "mais", "comme", "tout", "tous", "toutes", "chose", "choses",
+  "entre", "selon", "ainsi", "plutot", "nouvelles", "nouveau", "nouvelle",
+  "nouveaux",
+]);
+
+function normalizeText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/** Significant tokens (length >= 4, no stopwords) for overlap scoring. */
+function tokenize(value: string): string[] {
+  return normalizeText(value)
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 4 && !STOPWORDS.has(token));
+}
+
+type SelectedOption = { phrase: string; tokens: string[] };
+
+/** The user's explicit selections, turned into grounded keyword sets. */
+function getSelectedOptions(answers: Answers): SelectedOption[] {
+  const selected: SelectedOption[] = [];
 
   for (const question of QUESTIONS) {
     if (question.id === "location" || !question.options) continue;
@@ -33,11 +69,21 @@ function getReflectionPhrases(answers: Answers): string[] {
 
     for (const optionId of value) {
       const option = question.options.find((o) => o.id === optionId);
-      if (option) phrases.push(option.reflectionPhrase);
+      if (!option) continue;
+      selected.push({
+        phrase: option.reflectionPhrase,
+        tokens: [
+          ...new Set(tokenize(`${option.label} ${option.reflectionPhrase}`)),
+        ],
+      });
     }
   }
 
-  return [...new Set(phrases)];
+  return selected;
+}
+
+function getReflectionPhrases(answers: Answers): string[] {
+  return [...new Set(getSelectedOptions(answers).map((option) => option.phrase))];
 }
 
 function formatPhraseList(phrases: string[]): string {
@@ -56,63 +102,124 @@ export function buildReflection(answers: Answers): string {
   return `D'après ce que vous nous avez partagé, vous semblez apprécier ${formatted}.`;
 }
 
-export function computeRecommendations(answers: Answers): Recommendation[] {
-  const city = getResolvedLocation(answers);
-  const projects = filterProjectsByCity(getProjectsSync(), city);
-  const scores: Record<string, number> = {};
-  for (const project of projects) scores[project.id] = 0;
+type ProjectIndex = {
+  sector: Set<string>;
+  skills: Set<string>;
+  careers: Set<string>;
+  description: Set<string>;
+};
 
-  for (const question of QUESTIONS) {
-    if (question.id === "location" || !question.options) continue;
-    const value = answers[question.id];
-    if (!Array.isArray(value)) continue;
-
-    for (const optionId of value) {
-      const option = question.options.find((o) => o.id === optionId);
-      if (!option) continue;
-      for (const [projectId, weight] of Object.entries(option.projectWeights)) {
-        if (!(projectId in scores)) continue;
-        scores[projectId] = (scores[projectId] ?? 0) + (weight ?? 0);
-      }
-    }
-  }
-
-  const phrases = getReflectionPhrases(answers);
-  const traitSample = formatPhraseList(phrases.slice(0, 2));
-
-  return Object.entries(scores)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([projectId, score]) => {
-      const project = projects.find((p) => p.id === projectId)!;
-      const template =
-        project.matchTemplates[score % project.matchTemplates.length];
-      return {
-        projectId,
-        score,
-        personalMatch: template.replace("{traits}", traitSample),
-      };
-    });
+function buildProjectIndex(project: Project): ProjectIndex {
+  return {
+    sector: new Set(tokenize(project.sector ?? "")),
+    skills: new Set(tokenize((project.skills ?? []).join(" "))),
+    careers: new Set(tokenize((project.careers ?? []).join(" "))),
+    description: new Set(tokenize(project.description ?? "")),
+  };
 }
 
-export function buildPersonalSummary(
-  answers: Answers,
-  recommendations: Recommendation[],
-): string {
-  const phrases = getReflectionPhrases(answers);
-  const traits = formatPhraseList(phrases.slice(0, 3));
-  const top = getProjectsSync().find((p) => p.id === recommendations[0]?.projectId);
+/**
+ * Score a project purely from data fields: sector / skills / careers /
+ * description keyword overlap with the user's explicit selections, plus a light
+ * city-match bonus. No personality inference. Returns the score and the user
+ * phrases that actually overlapped (used for grounded narrative).
+ */
+function scoreProject(
+  project: Project,
+  selectedOptions: SelectedOption[],
+  resolvedCity: string,
+): { score: number; matchedPhrases: string[] } {
+  const index = buildProjectIndex(project);
+  let score = 0;
+  const matchedPhrases: string[] = [];
 
-  const optionalNote =
-    typeof answers.optional === "string" && answers.optional.trim()
-      ? " Vous nous avez aussi confié quelque chose de personnel — nous en avons tenu compte."
-      : "";
-
-  if (!top) {
-    return `Vos réponses font ressortir un intérêt pour ${traits}. Certaines transformations régionales peuvent être intéressantes à explorer à partir de cette curiosité.${optionalNote}`;
+  for (const option of selectedOptions) {
+    let contributed = false;
+    for (const token of option.tokens) {
+      if (index.sector.has(token)) {
+        score += FIELD_WEIGHTS.sector;
+        contributed = true;
+      }
+      if (index.skills.has(token)) {
+        score += FIELD_WEIGHTS.skills;
+        contributed = true;
+      }
+      if (index.careers.has(token)) {
+        score += FIELD_WEIGHTS.careers;
+        contributed = true;
+      }
+      if (index.description.has(token)) {
+        score += FIELD_WEIGHTS.description;
+        contributed = true;
+      }
+    }
+    if (contributed) matchedPhrases.push(option.phrase);
   }
 
-  return `Ce qui ressort de vos réponses, c'est un intérêt pour ${traits}. ${top.name} fait partie des transformations régionales qui correspondent aux intérêts que vous avez partagés, notamment autour de ${top.sector.toLowerCase()}.${optionalNote} Vous n'avez pas à vous figer aujourd'hui — mais vous pouvez déjà explorer ce que ce secteur pourrait vous apprendre.`;
+  if (
+    resolvedCity &&
+    normalizeCity(project.city ?? "") === normalizeCity(resolvedCity)
+  ) {
+    score += FIELD_WEIGHTS.city;
+  }
+
+  return { score, matchedPhrases: [...new Set(matchedPhrases)] };
+}
+
+function buildMatchSentence(matchedPhrases: string[]): string {
+  if (matchedPhrases.length === 0) return "";
+  const themes = formatPhraseList(matchedPhrases.slice(0, 3));
+  return `Ce secteur recoupe vos sélections autour de ${themes}.`;
+}
+
+/**
+ * Pure ranked top-K retrieval. Scores ALL projects, sorts descending (stable on
+ * ties), and ALWAYS returns the top 5 (or the whole dataset if it has fewer
+ * than 5). No thresholds, no minimum-score filtering, no single-result collapse.
+ * Even when every score is 0 (low-confidence), it still returns the top ranked
+ * projects for graceful degradation.
+ */
+export function computeRecommendations(
+  answers: Answers,
+  projects: Project[],
+): Recommendation[] {
+  const pool = Array.isArray(projects) ? projects.filter(Boolean) : [];
+  if (pool.length === 0) return [];
+
+  const selectedOptions = getSelectedOptions(answers);
+  const resolvedCity = getResolvedLocation(answers);
+
+  const ranked = pool
+    .map((project, index) => {
+      const { score, matchedPhrases } = scoreProject(
+        project,
+        selectedOptions,
+        resolvedCity,
+      );
+      return { project, index, score, matchedPhrases };
+    })
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  return ranked.slice(0, Math.min(MAX_RESULTS, pool.length)).map((entry) => ({
+    projectId: entry.project.id,
+    score: entry.score,
+    personalMatch: buildMatchSentence(entry.matchedPhrases),
+  }));
+}
+
+/**
+ * Non-inferential, data-grounded framing for the results page. Makes no claim
+ * about the user's personality, motivations, or interests — it only states that
+ * sectors were matched from their explicit selections and frames the cards below
+ * as real, explorable industrial transitions in the region.
+ */
+export function buildPersonalSummary(): string {
+  return [
+    "D'après vos sélections, nous avons identifié plusieurs secteurs industriels en lien avec vos réponses.",
+    "Ils correspondent à des transitions industrielles réelles, actuellement en cours dans la région de Saint-Avold.",
+    "Voici des pistes concrètes que vous pouvez explorer — pas des prédictions, mais de réelles opportunités liées à des projets industriels en cours.",
+    "Vous pouvez explorer chacune de ces directions sans vous engager : c'est un point de départ pour découvrir.",
+  ].join(" ");
 }
 
 export function getResolvedLocation(answers: Answers): string {

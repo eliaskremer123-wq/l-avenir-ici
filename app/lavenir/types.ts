@@ -52,19 +52,28 @@ export type Recommendation = {
 
 export type Project = {
   id: string;
+
   name: string;
+
+  city: string;
+
   sector: string;
+
+  description: string;
+
   careers: string[];
+
   skills: string[];
-  timeline: string;
-  matchTemplates: string[];
-  learnMore: string;
-  locationCity: string;
-  locationLabel: string;
+
   preparationSteps: string[];
-  futureSkills: string[];
-  sectorTags: string[];
-  constraints: string[];
+
+  timeline: string;
+
+  status: string;
+
+  learnMore: string;
+
+  matchTemplates: string[];
 };
 
 export type TerritoryTopic = {

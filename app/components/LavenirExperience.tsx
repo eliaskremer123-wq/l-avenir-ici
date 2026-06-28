@@ -557,7 +557,7 @@ function PreparationBlock({
   return (
     <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-5 py-5">
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
-        Comment commencer à vous préparer
+        Comment vous préparer dès aujourd&apos;hui
       </p>
       <ul className="space-y-3">
         {preparationSteps.map((step) => (
@@ -614,6 +614,7 @@ function RecommendationCard({
         {project.name}
       </h3>
       <p className="mt-1.5 text-sm font-medium text-zinc-500">{project.sector}</p>
+      <p className="mt-4 text-sm leading-loose text-zinc-700">{project.description}</p>
 
       <div className="mt-8 space-y-6">
         <div>
@@ -662,12 +663,14 @@ function RecommendationCard({
           <p className="text-sm leading-loose text-zinc-600">{project.timeline}</p>
         </div>
 
-        <button
-          type="button"
-          className="mt-1 w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
+        <a
+          href={project.learnMore}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 block w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-center text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
         >
           Explorer ce secteur
-        </button>
+        </a>
       </div>
     </article>
   );

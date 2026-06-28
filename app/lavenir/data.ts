@@ -1,3 +1,4 @@
+import { safeParseProjects } from "./data-safety";
 import type { Project, Question, TerritoryTopic } from "./types";
 
 export const QUESTIONS: Question[] = [
@@ -87,7 +88,7 @@ export const QUESTIONS: Question[] = [
       },
       {
         id: "business",
-        label: "Commerce & gestion",
+        label: "Commerce",
         projectWeights: { logistics: 2, infrastructure: 1 },
         reflectionPhrase: "l'organisation et le sens des affaires",
       },
@@ -99,13 +100,13 @@ export const QUESTIONS: Question[] = [
       },
       {
         id: "chemistry",
-        label: "Chimie",
+        label: "Sciences",
         projectWeights: { chemistry: 4, hydrogen: 1 },
         reflectionPhrase: "la chimie et les matériaux",
       },
       {
         id: "mechanics",
-        label: "Mécanique",
+        label: "Travail manuel",
         projectWeights: { maintenance: 4, infrastructure: 2 },
         reflectionPhrase: "les machines et les systèmes mécaniques",
       },
@@ -219,11 +220,14 @@ export const ANALYSIS_STEPS = [
   "Préparer vos pistes à explorer",
 ];
 
-export const PROJECTS: Project[] = [
+const rawProjects = [
   {
     id: "hydrogen",
     name: "Hydrogène Carling",
+    city: "Saint-Avold",
     sector: "Technologies de l'hydrogène",
+    description:
+      "Un projet énergétique autour de la production et des usages de l'hydrogène bas carbone pour accompagner la transition industrielle du bassin.",
     careers: [
       "Technicien de procédés",
       "Opérateur énergétique",
@@ -240,28 +244,21 @@ export const PROJECTS: Project[] = [
       "Votre attrait pour {traits} peut rendre cette transition énergétique particulièrement intéressante à explorer.",
       "Ce hub énergétique ouvre des questions concrètes autour de {traits}, qui correspondent aux intérêts que vous avez partagés.",
     ],
-    learnMore:
-      "Renseignez-vous sur les filières énergie, procédés industriels et transition écologique proposées près de Saint-Avold.",
-    locationCity: "Saint-Avold",
-    locationLabel: "Bassin de Saint-Avold",
     preparationSteps: [
       "Participer activement aux projets de groupe à l'E2C ou en Mission Locale.",
       "Suivre des contenus sur l'énergie et la transition écologique (vidéos, articles, podcasts).",
       "Demander à effectuer une visite d'entreprise ou de site industriel dans ce secteur.",
     ],
-    futureSkills: [
-      "adaptability",
-      "communication",
-      "digital literacy",
-      "problem solving",
-    ],
-    sectorTags: ["hydrogen", "energy", "green-transition"],
-    constraints: ["Shift work", "PPE required", "Industrial site access"],
+    status: "Confirmé",
+    learnMore: "https://www.saint-avold.fr/",
   },
   {
     id: "chemistry",
     name: "Chimie circulaire",
+    city: "Saint-Avold",
     sector: "Chimie circulaire & économie circulaire",
+    description:
+      "Une transformation des activités chimiques vers le recyclage, la valorisation des matières et la réduction de l'impact environnemental.",
     careers: [
       "Technicien de laboratoire",
       "Opérateur de production",
@@ -278,28 +275,21 @@ export const PROJECTS: Project[] = [
       "Votre intérêt pour {traits} peut vous aider à comprendre une filière qui repense la production sans gaspiller.",
       "La chimie circulaire est une transformation à découvrir si vous souhaitez explorer {traits}.",
     ],
-    learnMore:
-      "Explorez les CAP/BTS chimie, environnement ou production industrielle dans le bassin mosellan.",
-    locationCity: "Saint-Avold",
-    locationLabel: "Bassin de Saint-Avold",
     preparationSteps: [
       "Renforcer les bases en sciences (chimie, environnement) via les ressources proposées par votre établissement.",
       "Participer à des ateliers ou projets liés au recyclage et à la durabilité.",
       "Échanger avec un conseiller E2C ou Mission Locale sur les filières chimie et environnement.",
     ],
-    futureSkills: [
-      "problem solving",
-      "communication",
-      "adaptability",
-      "digital literacy",
-    ],
-    sectorTags: ["chemistry", "green-transition"],
-    constraints: ["Shift work", "PPE required", "Laboratory protocols"],
+    status: "En construction",
+    learnMore: "https://www.saint-avold.fr/",
   },
   {
     id: "maintenance",
     name: "Maintenance industrielle",
+    city: "Saint-Avold",
     sector: "Industrie & maintenance",
+    description:
+      "Un ensemble de savoir-faire techniques pour comprendre, entretenir et sécuriser les équipements des sites industriels en transition.",
     careers: [
       "Technicien de maintenance",
       "Électromécanicien",
@@ -316,28 +306,21 @@ export const PROJECTS: Project[] = [
       "Si vous aimez {traits}, la maintenance industrielle peut être une piste concrète à observer de plus près.",
       "Les sites en reconversion permettent d'explorer des activités liées à {traits}, sans vous enfermer dans un choix immédiat.",
     ],
-    learnMore:
-      "Découvrez les formations en maintenance, électrotechnique et mécanique industrielle.",
-    locationCity: "Saint-Avold",
-    locationLabel: "Bassin de Saint-Avold",
     preparationSteps: [
       "S'initier à la mécanique ou à l'électrotechnique via des modules courts ou stages découverte.",
       "Développer la rigueur et la sécurité en atelier lors des travaux pratiques à l'E2C.",
       "Se renseigner sur les entreprises industrielles locales pour mieux comprendre la maintenance.",
     ],
-    futureSkills: [
-      "problem solving",
-      "adaptability",
-      "communication",
-      "digital literacy",
-    ],
-    sectorTags: ["maintenance", "energy"],
-    constraints: ["Shift work", "Outdoor work", "PPE required"],
+    status: "Confirmé",
+    learnMore: "https://www.onisep.fr/",
   },
   {
     id: "logistics",
     name: "Flux logistiques régionaux",
+    city: "Forbach",
     sector: "Logistique & supply chain",
+    description:
+      "Une activité clé pour organiser les flux de matières, d'équipements et de produits entre les sites industriels du territoire.",
     careers: [
       "Responsable logistique",
       "Coordinateur transport",
@@ -354,28 +337,21 @@ export const PROJECTS: Project[] = [
       "Votre goût pour {traits} peut rendre la logistique régionale intéressante à explorer.",
       "Comprendre les flux peut être une manière concrète d'approfondir {traits}.",
     ],
-    learnMore:
-      "Consultez les formations en transport-logistique et supply chain de la région.",
-    locationCity: "Forbach",
-    locationLabel: "Nord Mosellan",
     preparationSteps: [
       "Travailler l'organisation et la gestion de projet dans vos activités scolaires ou associatives.",
       "Se familiariser avec les outils bureautiques et numériques de suivi et de planification.",
       "Demander une immersion ou une journée découverte dans une entreprise de transport ou d'entrepôt.",
     ],
-    futureSkills: [
-      "communication",
-      "digital literacy",
-      "adaptability",
-      "problem solving",
-    ],
-    sectorTags: ["logistics", "maintenance"],
-    constraints: ["Shift work", "Outdoor work"],
+    status: "Annoncé",
+    learnMore: "https://www.onisep.fr/",
   },
   {
     id: "infrastructure",
     name: "Réseaux énergétiques",
+    city: "Metz",
     sector: "Infrastructure énergétique",
+    description:
+      "Des chantiers et réseaux nécessaires pour alimenter, raccorder et moderniser les nouveaux projets énergétiques et industriels.",
     careers: [
       "Électricien industriel",
       "Technicien réseaux",
@@ -392,25 +368,30 @@ export const PROJECTS: Project[] = [
       "Votre affinité pour {traits} peut vous aider à explorer les infrastructures qui alimentent l'industrie locale.",
       "Les réseaux énergétiques offrent une piste pour comprendre comment {traits} se traduit dans des projets de territoire.",
     ],
-    learnMore:
-      "Renseignez-vous sur le BTP énergétique et l'électrotechnique dans les lycées professionnels voisins.",
-    locationCity: "Metz",
-    locationLabel: "Métropole messine",
     preparationSteps: [
       "Explorer les bases de l'électricité et du BTP via des modules proposés en lycée pro ou E2C.",
       "Renforcer le travail en équipe sur des projets de chantier simulés ou encadrés.",
       "Contacter un lycée professionnel voisin pour une visite de filière électrotechnique ou énergétique.",
     ],
-    futureSkills: [
-      "adaptability",
-      "problem solving",
-      "communication",
-      "digital literacy",
-    ],
-    sectorTags: ["energy", "green-transition"],
-    constraints: ["Outdoor work", "PPE required", "Shift work"],
+    status: "Spéculatif",
+    learnMore: "https://www.onisep.fr/",
   },
 ];
+
+function normalizeProjectDataset(rows: typeof rawProjects): Project[] {
+  const parsedProjects = safeParseProjects(rows);
+
+  if (parsedProjects.length !== rows.length) {
+    console.warn("Project dataset fallback triggered");
+  }
+
+  return parsedProjects.map((project, index) => ({
+    ...project,
+    id: rows[index]?.id ?? project.id,
+  }));
+}
+
+export const PROJECTS: Project[] = normalizeProjectDataset(rawProjects);
 
 /** Mock data source — replace with API/Sheets fetch without changing consumers. */
 export async function getProjects(): Promise<Project[]> {

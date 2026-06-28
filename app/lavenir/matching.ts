@@ -17,7 +17,7 @@ export function filterProjectsByCity(
 
   const needle = normalizeCity(normalized);
   const filtered = projects.filter(
-    (project) => normalizeCity(project.locationCity) === needle,
+    (project) => normalizeCity(project.city) === needle,
   );
 
   return filtered.length > 0 ? filtered : projects;

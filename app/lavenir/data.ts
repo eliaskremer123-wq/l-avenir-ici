@@ -393,9 +393,54 @@ function normalizeProjectDataset(rows: typeof rawProjects): Project[] {
 
 export const PROJECTS: Project[] = normalizeProjectDataset(rawProjects);
 
-/** Mock data source — replace with API/Sheets fetch without changing consumers. */
-export async function getProjects(): Promise<Project[]> {
-  return PROJECTS;
+/**
+ * Source of raw, untrusted project rows (e.g. the Google Sheet connector).
+ * Returns header-keyed row objects; never trusted, never mapped to `Project`.
+ */
+export type RawProjectSource = () => Promise<unknown[]>;
+
+/**
+ * Orchestration layer — single source of truth for project data.
+ *
+ * Flow: raw rows (from `source`) → safeParseProjects() → clean Project[].
+ *
+ * The external source is treated as a weak, untrusted backend. The connector
+ * (`sheets.ts`) pulls in googleapis, a Node-only package, and must never reach
+ * the browser bundle. Because this module is shared with the client (matching.ts
+ * and the UI import the mock dataset + questions from here), the connector is
+ * injected by the server-only API route instead of being imported here.
+ *
+ * If no source is provided, the source fails, or it yields no usable rows, we
+ * fall back to the curated mock dataset and log a warning. This function must
+ * never throw — youth guidance must keep working even when the sheet does not.
+ */
+export async function getProjects(source?: RawProjectSource): Promise<Project[]> {
+  if (!source) {
+    console.warn(
+      "[data] No project source provided — using mock project dataset.",
+    );
+    return PROJECTS;
+  }
+
+  try {
+    const rawRows = await source();
+    const parsed = safeParseProjects(rawRows);
+
+    if (parsed.length === 0) {
+      console.warn(
+        "[data] Project source returned no usable rows — using mock project dataset.",
+      );
+      return PROJECTS;
+    }
+
+    return parsed;
+  } catch (error) {
+    console.warn(
+      "[data] Failed to load projects from external source — using mock project dataset.",
+      error,
+    );
+    return PROJECTS;
+  }
 }
 
 /** Synchronous project access for matching until recommendation flow is async. */

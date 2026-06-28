@@ -58,8 +58,27 @@ function readRawField(raw: unknown, keys: string[]): unknown {
   if (raw === null || typeof raw !== "object") return undefined;
 
   const record = raw as RawRecord;
+
+  // 1. Exact header match (fast path).
   for (const key of keys) {
     if (record[key] !== undefined) return record[key];
+  }
+
+  // 2. Fuzzy match: teachers' headers are unstable (case, accents, trailing
+  //    spaces, long parentheticals). Compare normalized header against each
+  //    candidate by equality or prefix so "Description (exemple: ...)" still
+  //    resolves to the "description" field.
+  const normalizedKeys = keys.map(normalizeForComparison).filter(Boolean);
+  for (const [rawKey, value] of Object.entries(record)) {
+    const normalizedHeader = normalizeForComparison(rawKey);
+    if (!normalizedHeader) continue;
+    if (
+      normalizedKeys.some(
+        (key) => normalizedHeader === key || normalizedHeader.startsWith(key),
+      )
+    ) {
+      return value;
+    }
   }
 
   return undefined;
@@ -78,9 +97,11 @@ function slug(value: string): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function safeMapToProject(raw: any, fallbackIndex: number): Project {
   try {
-    const name = safeString(readRawField(raw, ["name", "Nom", "Project", "Projet"]));
+    const name = safeString(
+      readRawField(raw, ["name", "Nom de Projet", "Nom du projet", "Nom", "Project", "Projet"]),
+    );
     const city = normalizeCity(
-      safeString(readRawField(raw, ["Emplacement", "city", "City", "Ville"])),
+      safeString(readRawField(raw, ["Ville", "Emplacement", "city", "City"])),
     );
 
     return {
@@ -89,8 +110,23 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
       city,
       sector: safeString(readRawField(raw, ["sector", "Secteur"])),
       description: safeString(readRawField(raw, ["description", "Description"])),
-      careers: safeArray(readRawField(raw, ["careers", "Métiers", "metiers"])),
-      skills: safeArray(readRawField(raw, ["skills", "Compétences", "competences"])),
+      careers: safeArray(
+        readRawField(raw, [
+          "careers",
+          "Types d'emploi",
+          "Types d'emploi/opportunités créés",
+          "Métiers",
+          "metiers",
+        ]),
+      ),
+      skills: safeArray(
+        readRawField(raw, [
+          "skills",
+          "Compétences",
+          "Compétences ou centres d'intérêt requis",
+          "competences",
+        ]),
+      ),
       preparationSteps: safeArray(
         readRawField(raw, [
           "preparationSteps",
@@ -100,14 +136,22 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
         ]),
       ),
       timeline:
-        safeString(readRawField(raw, ["timeline", "Timeline", "Horizon"])) ||
-        "Indéterminé",
+        safeString(
+          readRawField(raw, ["timeline", "Timeline", "Chronologie", "Horizon"]),
+        ) || "Indéterminé",
       status:
         safeString(readRawField(raw, ["status", "Status", "Statut"])) ||
         "Spéculatif",
       learnMore:
-        safeString(readRawField(raw, ["learnMore", "Learn More", "URL", "Lien"])) ||
-        "#",
+        safeString(
+          readRawField(raw, [
+            "learnMore",
+            "Lien pour en savoir plus",
+            "Learn More",
+            "URL",
+            "Lien",
+          ]),
+        ) || "#",
       matchTemplates: safeArray(
         readRawField(raw, ["matchTemplates", "Match Templates", "Templates"]),
       ),

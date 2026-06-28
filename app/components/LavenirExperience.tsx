@@ -8,7 +8,14 @@ import {
   canAdvanceQuestion,
   computeRecommendations,
 } from "../lavenir/matching";
-import type { Answers, LocationChoice, QuestionId, Recommendation, Stage } from "../lavenir/types";
+import type {
+  Answers,
+  LocationChoice,
+  Project,
+  QuestionId,
+  Recommendation,
+  Stage,
+} from "../lavenir/types";
 
 const INITIAL_ANSWERS: Answers = {
   location: "",
@@ -552,15 +559,18 @@ function AnalyzeStage({ onComplete }: { onComplete: () => void }) {
 function PreparationBlock({
   preparationSteps,
 }: {
-  preparationSteps: string[];
+  preparationSteps?: string[];
 }) {
+  const steps = preparationSteps ?? [];
+  if (steps.length === 0) return null;
+
   return (
     <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-5 py-5">
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
         Comment vous préparer dès aujourd&apos;hui
       </p>
       <ul className="space-y-3">
-        {preparationSteps.map((step) => (
+        {steps.map((step) => (
           <li key={step} className="flex gap-3 text-sm leading-relaxed text-zinc-700">
             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600/10 text-emerald-700">
               <svg
@@ -588,9 +598,20 @@ function RecommendationCard({
   isTopMatch,
 }: {
   recommendation: Recommendation;
-  project: (typeof PROJECTS)[number];
+  project: Project;
   isTopMatch: boolean;
 }) {
+  // Defensive display guards: the live sheet is a weak backend, so any field
+  // may arrive missing. Never render undefined or broken blocks.
+  const name = project.name?.trim() || "Projet à découvrir";
+  const sector = project.sector?.trim() ?? "";
+  const description = project.description?.trim() ?? "";
+  const careers = project.careers ?? [];
+  const skills = project.skills ?? [];
+  const steps = project.preparationSteps ?? [];
+  const timeline = project.timeline?.trim() ?? "";
+  const learnMore = project.learnMore?.trim() ? project.learnMore : "#";
+
   return (
     <article
       className={[
@@ -611,10 +632,14 @@ function RecommendationCard({
       )}
 
       <h3 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-[1.35rem]">
-        {project.name}
+        {name}
       </h3>
-      <p className="mt-1.5 text-sm font-medium text-zinc-500">{project.sector}</p>
-      <p className="mt-4 text-sm leading-loose text-zinc-700">{project.description}</p>
+      {sector && (
+        <p className="mt-1.5 text-sm font-medium text-zinc-500">{sector}</p>
+      )}
+      {description && (
+        <p className="mt-4 text-sm leading-loose text-zinc-700">{description}</p>
+      )}
 
       <div className="mt-8 space-y-6">
         <div>
@@ -626,45 +651,51 @@ function RecommendationCard({
           </p>
         </div>
 
-        <div>
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            Métiers à découvrir
-          </p>
-          <ul className="space-y-2">
-            {project.careers.map((career) => (
-              <li key={career} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-600">
-                <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
-                {career}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {careers.length > 0 && (
+          <div>
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              Métiers à découvrir
+            </p>
+            <ul className="space-y-2">
+              {careers.map((career) => (
+                <li key={career} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-600">
+                  <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
+                  {career}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        <div>
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            Compétences souvent développées
-          </p>
-          <ul className="space-y-2">
-            {project.skills.map((skill) => (
-              <li key={skill} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-600">
-                <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
-                {skill}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {skills.length > 0 && (
+          <div>
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              Compétences souvent développées
+            </p>
+            <ul className="space-y-2">
+              {skills.map((skill) => (
+                <li key={skill} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-600">
+                  <span className="h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
+                  {skill}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        <PreparationBlock preparationSteps={project.preparationSteps} />
+        {steps.length > 0 && <PreparationBlock preparationSteps={steps} />}
 
-        <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/70 px-5 py-4 backdrop-blur-sm">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            Horizon
-          </p>
-          <p className="text-sm leading-loose text-zinc-600">{project.timeline}</p>
-        </div>
+        {timeline && (
+          <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/70 px-5 py-4 backdrop-blur-sm">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              Horizon
+            </p>
+            <p className="text-sm leading-loose text-zinc-600">{timeline}</p>
+          </div>
+        )}
 
         <a
-          href={project.learnMore}
+          href={learnMore}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-1 block w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-center text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
@@ -679,10 +710,14 @@ function RecommendationCard({
 function DiscoverStage({
   personalSummary,
   recommendations,
+  projects,
+  projectsStatus,
   onContinue,
 }: {
   personalSummary: string;
   recommendations: Recommendation[];
+  projects: Project[];
+  projectsStatus: "loading" | "ready" | "error";
   onContinue: () => void;
 }) {
   return (
@@ -709,9 +744,18 @@ function DiscoverStage({
             Ces transformations régionales correspondent aux intérêts que vous
             avez partagés.
           </p>
+          {projectsStatus === "loading" && (
+            <p className="mt-4 text-xs text-zinc-400">Chargement des données…</p>
+          )}
           <div className="mt-8 space-y-6">
             {recommendations.map((rec, i) => {
-              const project = PROJECTS.find((p) => p.id === rec.projectId)!;
+              // Single display source: the catalog fetched from /api/projects.
+              // Mock data is used only as a safety fallback so a recommended
+              // project can never render as a blank card.
+              const project =
+                projects.find((p) => p.id === rec.projectId) ??
+                PROJECTS.find((p) => p.id === rec.projectId);
+              if (!project) return null;
               return (
                 <RecommendationCard
                   key={rec.projectId}
@@ -816,6 +860,54 @@ export default function LavenirExperience() {
   const [reflection, setReflection] = useState("");
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [personalSummary, setPersonalSummary] = useState("");
+
+  // Single source of truth for the displayed project catalog: /api/projects.
+  // Initialized with the local dataset so the UI is never empty, and falls back
+  // to it if the request fails. This is the only place the UI loads projects.
+  const [projects, setProjects] = useState<Project[]>(PROJECTS);
+  const [projectsStatus, setProjectsStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const response = await fetch("/api/projects");
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+
+        const data: unknown = await response.json();
+        const list =
+          data && typeof data === "object" && Array.isArray((data as { projects?: unknown }).projects)
+            ? ((data as { projects: Project[] }).projects)
+            : [];
+
+        if (cancelled) return;
+
+        if (list.length > 0) {
+          setProjects(list);
+          setProjectsStatus("ready");
+        } else {
+          // Keep the local fallback dataset; never blank the screen.
+          setProjects(PROJECTS);
+          setProjectsStatus("error");
+        }
+      } catch (error) {
+        console.warn(
+          "[ui] Failed to load /api/projects — using local fallback dataset.",
+          error,
+        );
+        if (cancelled) return;
+        setProjects(PROJECTS);
+        setProjectsStatus("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleAnswerChange = useCallback(
     (questionId: Exclude<QuestionId, "location">, value: string[] | string) => {
@@ -923,6 +1015,8 @@ export default function LavenirExperience() {
         <DiscoverStage
           personalSummary={personalSummary}
           recommendations={recommendations}
+          projects={projects}
+          projectsStatus={projectsStatus}
           onContinue={() => setStage("continue")}
         />
       )}

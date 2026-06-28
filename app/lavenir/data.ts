@@ -245,7 +245,7 @@ const rawProjects = [
       "Ce hub énergétique ouvre des questions concrètes autour de {traits}, qui correspondent aux intérêts que vous avez partagés.",
     ],
     preparationSteps: [
-      "Participer activement aux projets de groupe à l'E2C ou en Mission Locale.",
+      "Participer activement aux projets de groupe au sein de votre parcours de formation.",
       "Suivre des contenus sur l'énergie et la transition écologique (vidéos, articles, podcasts).",
       "Demander à effectuer une visite d'entreprise ou de site industriel dans ce secteur.",
     ],
@@ -278,7 +278,7 @@ const rawProjects = [
     preparationSteps: [
       "Renforcer les bases en sciences (chimie, environnement) via les ressources proposées par votre établissement.",
       "Participer à des ateliers ou projets liés au recyclage et à la durabilité.",
-      "Échanger avec un conseiller E2C ou Mission Locale sur les filières chimie et environnement.",
+      "Échanger avec un conseiller de votre établissement sur les filières chimie et environnement.",
     ],
     status: "En construction",
     learnMore: "https://www.saint-avold.fr/",

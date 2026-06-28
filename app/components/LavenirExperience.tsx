@@ -7,10 +7,11 @@ import {
   buildReflection,
   canAdvanceQuestion,
   computeRecommendations,
+  filterProjectsByCity,
+  getResolvedLocation,
 } from "../lavenir/matching";
 import type {
   Answers,
-  LocationChoice,
   Project,
   QuestionId,
   Recommendation,
@@ -138,37 +139,59 @@ function SelectableCard({
   );
 }
 
-function LocationChoiceCard({
-  title,
-  subtitle,
-  selected,
-  onSelect,
-  children,
+const CITY_SUGGESTIONS = [
+  "Saint-Avold",
+  "Forbach",
+  "Hambach",
+  "Carling",
+  "Hayange",
+  "Ligny-en-Barrois",
+];
+
+function LocationAutocomplete({
+  value,
+  onChange,
 }: {
-  title: string;
-  subtitle: string;
-  selected: boolean;
-  onSelect: () => void;
-  children?: React.ReactNode;
+  value: string;
+  onChange: (city: string) => void;
 }) {
+  const [focused, setFocused] = useState(false);
+  // Suggestions appear on focus and disappear as soon as the user types.
+  const showSuggestions = focused && value.trim().length === 0;
+
   return (
-    <div className="space-y-3">
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-pressed={selected}
-        className={[
-          OPTION_CARD,
-          "w-full p-5",
-          selected
-            ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-200/80 -translate-y-px"
-            : "border-zinc-200 hover:-translate-y-px hover:border-zinc-300",
-        ].join(" ")}
-      >
-        <span className="block text-base font-medium text-zinc-900">{title}</span>
-        <span className="mt-1 block text-sm text-zinc-500">{subtitle}</span>
-      </button>
-      {selected && children}
+    <div className="relative">
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder="Entrez votre ville (ex. Saint-Avold, Forbach)"
+        autoComplete="off"
+        aria-label="Votre ville"
+        className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 transition-colors focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+      />
+      {showSuggestions && (
+        <ul className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/5">
+          {CITY_SUGGESTIONS.map((city) => (
+            <li key={city}>
+              <button
+                type="button"
+                // onMouseDown fires before input blur, so the value is set reliably.
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(city);
+                  setFocused(false);
+                }}
+                className="block w-full px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50 focus-visible:bg-zinc-50 focus-visible:outline-none"
+              >
+                {city}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -309,7 +332,6 @@ function UnderstandStage({
   answers,
   direction,
   onAnswerChange,
-  onLocationChange,
   onLocationDetailChange,
   onNext,
   onBack,
@@ -322,7 +344,6 @@ function UnderstandStage({
     questionId: Exclude<QuestionId, "location">,
     value: string[] | string,
   ) => void;
-  onLocationChange: (choice: Exclude<LocationChoice, "">) => void;
   onLocationDetailChange: (detail: string) => void;
   onNext: () => void;
   onBack: () => void;
@@ -375,28 +396,10 @@ function UnderstandStage({
 
         <div className="flex-1">
           {isLocation ? (
-            <div className="space-y-3">
-              <LocationChoiceCard
-                title="Saint-Avold"
-                subtitle="Bassin industriel historique"
-                selected={answers.location === "saint-avold"}
-                onSelect={() => onLocationChange("saint-avold")}
-              />
-              <LocationChoiceCard
-                title="Autre ville / Mission Locale / E2C"
-                subtitle="Précisez votre ville ou établissement"
-                selected={answers.location === "other"}
-                onSelect={() => onLocationChange("other")}
-              >
-                <input
-                  type="text"
-                  value={answers.locationDetail}
-                  onChange={(e) => onLocationDetailChange(e.target.value)}
-                  placeholder="Ex. Metz, Mission Locale de Forbach, E2C…"
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 transition-colors focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-              </LocationChoiceCard>
-            </div>
+            <LocationAutocomplete
+              value={answers.locationDetail}
+              onChange={onLocationDetailChange}
+            />
           ) : isOptional ? (
             <textarea
               value={answers.optional}
@@ -610,7 +613,8 @@ function RecommendationCard({
   const skills = project.skills ?? [];
   const steps = project.preparationSteps ?? [];
   const timeline = project.timeline?.trim() ?? "";
-  const learnMore = project.learnMore?.trim() ? project.learnMore : "#";
+  const learnMore = project.learnMore?.trim() ?? "";
+  const hasLearnMore = /^https?:\/\//i.test(learnMore);
 
   return (
     <article
@@ -694,17 +698,72 @@ function RecommendationCard({
           </div>
         )}
 
-        <a
-          href={learnMore}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1 block w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-center text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
-        >
-          Explorer ce secteur
-        </a>
+        {hasLearnMore && (
+          <a
+            href={learnMore}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 block w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-center text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
+          >
+            Explorer ce secteur
+          </a>
+        )}
       </div>
     </article>
   );
+}
+
+// Maps each curated recommendation theme to the sector vocabulary used in the
+// live sheet, so the displayed cards bind to real sheet projects.
+const RECOMMENDATION_SECTOR_KEYWORDS: Record<string, string> = {
+  hydrogen: "energie",
+  infrastructure: "energie",
+  chemistry: "chimie",
+  maintenance: "industrie",
+  logistics: "logistique",
+};
+
+function normalizeSector(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/**
+ * Binds each recommendation to a real project from the API catalog (city-filtered),
+ * preferring an exact id match, then a same-sector match, then any remaining
+ * project. Falls back to the local dataset only as a last resort so a card is
+ * never blank. This is display data-binding only — the matching engine is
+ * untouched.
+ */
+function resolveRecommendationProjects(
+  recommendations: Recommendation[],
+  apiProjects: Project[],
+  resolvedCity: string,
+): { recommendation: Recommendation; project: Project }[] {
+  const pool = filterProjectsByCity(apiProjects, resolvedCity);
+  const used = new Set<string>();
+  const resolved: { recommendation: Recommendation; project: Project }[] = [];
+
+  for (const recommendation of recommendations) {
+    const keyword = RECOMMENDATION_SECTOR_KEYWORDS[recommendation.projectId];
+    const project =
+      pool.find((p) => !used.has(p.id) && p.id === recommendation.projectId) ??
+      (keyword
+        ? pool.find(
+            (p) => !used.has(p.id) && normalizeSector(p.sector).includes(keyword),
+          )
+        : undefined) ??
+      pool.find((p) => !used.has(p.id)) ??
+      PROJECTS.find((p) => p.id === recommendation.projectId);
+
+    if (!project) continue;
+    used.add(project.id);
+    resolved.push({ recommendation, project });
+  }
+
+  return resolved;
 }
 
 function DiscoverStage({
@@ -712,19 +771,26 @@ function DiscoverStage({
   recommendations,
   projects,
   projectsStatus,
+  resolvedCity,
   onContinue,
 }: {
   personalSummary: string;
   recommendations: Recommendation[];
   projects: Project[];
   projectsStatus: "loading" | "ready" | "error";
+  resolvedCity: string;
   onContinue: () => void;
 }) {
+  const resolvedRecommendations = resolveRecommendationProjects(
+    recommendations,
+    projects,
+    resolvedCity,
+  );
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-16 sm:px-10 sm:py-24">
       <FadeIn>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-zinc-900 sm:text-4xl sm:leading-[1.15]">
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-zinc-100 sm:text-4xl sm:leading-[1.15]">
             Voici ce que nous avons découvert.
           </h2>
         </div>
@@ -737,42 +803,33 @@ function DiscoverStage({
         </div>
 
         <div className="mt-20">
-          <h3 className="text-xl font-semibold tracking-tight text-zinc-900">
+          <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
             Transformations à explorer
           </h3>
-          <p className="mt-3 max-w-lg text-sm leading-loose text-zinc-500">
+          <p className="mt-3 max-w-lg text-sm leading-loose text-zinc-300">
             Ces transformations régionales correspondent aux intérêts que vous
             avez partagés.
           </p>
           {projectsStatus === "loading" && (
-            <p className="mt-4 text-xs text-zinc-400">Chargement des données…</p>
+            <p className="mt-4 text-xs text-zinc-300">Chargement des données…</p>
           )}
           <div className="mt-8 space-y-6">
-            {recommendations.map((rec, i) => {
-              // Single display source: the catalog fetched from /api/projects.
-              // Mock data is used only as a safety fallback so a recommended
-              // project can never render as a blank card.
-              const project =
-                projects.find((p) => p.id === rec.projectId) ??
-                PROJECTS.find((p) => p.id === rec.projectId);
-              if (!project) return null;
-              return (
-                <RecommendationCard
-                  key={rec.projectId}
-                  recommendation={rec}
-                  project={project}
-                  isTopMatch={i === 0}
-                />
-              );
-            })}
+            {resolvedRecommendations.map(({ recommendation, project }, i) => (
+              <RecommendationCard
+                key={project.id}
+                recommendation={recommendation}
+                project={project}
+                isTopMatch={i === 0}
+              />
+            ))}
           </div>
         </div>
 
-        <section className="mt-24 border-t border-zinc-200/40 pt-20">
-          <h3 className="text-xl font-semibold tracking-tight text-zinc-900">
+        <section className="mt-24 border-t border-zinc-200/15 pt-20">
+          <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
             Que se passe-t-il à Saint-Avold ?
           </h3>
-          <p className="mt-4 max-w-xl text-sm leading-loose text-zinc-500">
+          <p className="mt-4 max-w-xl text-sm leading-loose text-zinc-300">
             Votre parcours personnel s&apos;inscrit dans une transformation plus
             large. Voici les grands mouvements qui redessinent le territoire.
           </p>
@@ -916,17 +973,6 @@ export default function LavenirExperience() {
     [],
   );
 
-  const handleLocationChange = useCallback(
-    (choice: Exclude<LocationChoice, "">) => {
-      setAnswers((prev) => ({
-        ...prev,
-        location: choice,
-        locationDetail: choice === "saint-avold" ? "" : prev.locationDetail,
-      }));
-    },
-    [],
-  );
-
   const handleLocationDetailChange = useCallback((detail: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -992,7 +1038,6 @@ export default function LavenirExperience() {
           answers={answers}
           direction={direction}
           onAnswerChange={handleAnswerChange}
-          onLocationChange={handleLocationChange}
           onLocationDetailChange={handleLocationDetailChange}
           onNext={handleUnderstandNext}
           onBack={handleUnderstandBack}
@@ -1017,6 +1062,7 @@ export default function LavenirExperience() {
           recommendations={recommendations}
           projects={projects}
           projectsStatus={projectsStatus}
+          resolvedCity={getResolvedLocation(answers)}
           onContinue={() => setStage("continue")}
         />
       )}

@@ -1,4 +1,5 @@
 import { safeParseProjects } from "./data-safety";
+import { getFallbackProjectRows } from "./fallback";
 import type { Project, Question, TerritoryTopic } from "./types";
 
 export const QUESTIONS: Question[] = [
@@ -220,178 +221,19 @@ export const ANALYSIS_STEPS = [
   "Préparer vos pistes à explorer",
 ];
 
-const rawProjects = [
-  {
-    id: "hydrogen",
-    name: "Hydrogène Carling",
-    city: "Saint-Avold",
-    sector: "Technologies de l'hydrogène",
-    description:
-      "Un projet énergétique autour de la production et des usages de l'hydrogène bas carbone pour accompagner la transition industrielle du bassin.",
-    careers: [
-      "Technicien de procédés",
-      "Opérateur énergétique",
-      "Ingénieur en énergies renouvelables",
-    ],
-    skills: [
-      "Rigueur scientifique et sécurité industrielle",
-      "Compréhension des systèmes et de l'automatisation",
-      "Sensibilité aux enjeux environnementaux",
-    ],
-    timeline:
-      "Les premières formations, visites et découvertes de terrain se multiplient dès les prochaines années, avec une montée en charge progressive du site.",
-    matchTemplates: [
-      "Votre attrait pour {traits} peut rendre cette transition énergétique particulièrement intéressante à explorer.",
-      "Ce hub énergétique ouvre des questions concrètes autour de {traits}, qui correspondent aux intérêts que vous avez partagés.",
-    ],
-    preparationSteps: [
-      "Participer activement aux projets de groupe au sein de votre parcours de formation.",
-      "Suivre des contenus sur l'énergie et la transition écologique (vidéos, articles, podcasts).",
-      "Demander à effectuer une visite d'entreprise ou de site industriel dans ce secteur.",
-    ],
-    status: "Confirmé",
-    learnMore: "https://www.saint-avold.fr/",
-  },
-  {
-    id: "chemistry",
-    name: "Chimie circulaire",
-    city: "Saint-Avold",
-    sector: "Chimie circulaire & économie circulaire",
-    description:
-      "Une transformation des activités chimiques vers le recyclage, la valorisation des matières et la réduction de l'impact environnemental.",
-    careers: [
-      "Technicien de laboratoire",
-      "Opérateur de production",
-      "Chargé de qualité environnementale",
-    ],
-    skills: [
-      "Précision en milieu industriel",
-      "Compréhension des flux et du recyclage",
-      "Esprit d'équipe sur des procédés exigeants",
-    ],
-    timeline:
-      "La reconversion des sites chimiques s'étale sur la décennie — le moment idéal pour se former en amont.",
-    matchTemplates: [
-      "Votre intérêt pour {traits} peut vous aider à comprendre une filière qui repense la production sans gaspiller.",
-      "La chimie circulaire est une transformation à découvrir si vous souhaitez explorer {traits}.",
-    ],
-    preparationSteps: [
-      "Renforcer les bases en sciences (chimie, environnement) via les ressources proposées par votre établissement.",
-      "Participer à des ateliers ou projets liés au recyclage et à la durabilité.",
-      "Échanger avec un conseiller de votre établissement sur les filières chimie et environnement.",
-    ],
-    status: "En construction",
-    learnMore: "https://www.saint-avold.fr/",
-  },
-  {
-    id: "maintenance",
-    name: "Maintenance industrielle",
-    city: "Saint-Avold",
-    sector: "Industrie & maintenance",
-    description:
-      "Un ensemble de savoir-faire techniques pour comprendre, entretenir et sécuriser les équipements des sites industriels en transition.",
-    careers: [
-      "Technicien de maintenance",
-      "Électromécanicien",
-      "Technicien instrumentation",
-    ],
-    skills: [
-      "Débrouillardise technique et diagnostic",
-      "Lecture de plans et schémas",
-      "Réactivité et sens du service",
-    ],
-    timeline:
-      "Chaque nouveau site industriel rend ces savoir-faire plus visibles dans le territoire, avec des parcours à découvrir progressivement.",
-    matchTemplates: [
-      "Si vous aimez {traits}, la maintenance industrielle peut être une piste concrète à observer de plus près.",
-      "Les sites en reconversion permettent d'explorer des activités liées à {traits}, sans vous enfermer dans un choix immédiat.",
-    ],
-    preparationSteps: [
-      "S'initier à la mécanique ou à l'électrotechnique via des modules courts ou stages découverte.",
-      "Développer la rigueur et la sécurité en atelier lors des travaux pratiques à l'E2C.",
-      "Se renseigner sur les entreprises industrielles locales pour mieux comprendre la maintenance.",
-    ],
-    status: "Confirmé",
-    learnMore: "https://www.onisep.fr/",
-  },
-  {
-    id: "logistics",
-    name: "Flux logistiques régionaux",
-    city: "Forbach",
-    sector: "Logistique & supply chain",
-    description:
-      "Une activité clé pour organiser les flux de matières, d'équipements et de produits entre les sites industriels du territoire.",
-    careers: [
-      "Responsable logistique",
-      "Coordinateur transport",
-      "Gestionnaire de stocks",
-    ],
-    skills: [
-      "Organisation et coordination",
-      "Maîtrise des outils numériques",
-      "Fiabilité et sens du détail",
-    ],
-    timeline:
-      "La relocalisation industrielle rend la logistique plus visible dès maintenant, avec des formations et immersions possibles.",
-    matchTemplates: [
-      "Votre goût pour {traits} peut rendre la logistique régionale intéressante à explorer.",
-      "Comprendre les flux peut être une manière concrète d'approfondir {traits}.",
-    ],
-    preparationSteps: [
-      "Travailler l'organisation et la gestion de projet dans vos activités scolaires ou associatives.",
-      "Se familiariser avec les outils bureautiques et numériques de suivi et de planification.",
-      "Demander une immersion ou une journée découverte dans une entreprise de transport ou d'entrepôt.",
-    ],
-    status: "Annoncé",
-    learnMore: "https://www.onisep.fr/",
-  },
-  {
-    id: "infrastructure",
-    name: "Réseaux énergétiques",
-    city: "Metz",
-    sector: "Infrastructure énergétique",
-    description:
-      "Des chantiers et réseaux nécessaires pour alimenter, raccorder et moderniser les nouveaux projets énergétiques et industriels.",
-    careers: [
-      "Électricien industriel",
-      "Technicien réseaux",
-      "Monteur en installations énergétiques",
-    ],
-    skills: [
-      "Travail en équipe sur chantier",
-      "Compréhension des systèmes électriques",
-      "Adaptabilité face aux nouvelles normes",
-    ],
-    timeline:
-      "La modernisation des réseaux accompagne chaque nouveau projet — un chantier de long terme, riche en opportunités.",
-    matchTemplates: [
-      "Votre affinité pour {traits} peut vous aider à explorer les infrastructures qui alimentent l'industrie locale.",
-      "Les réseaux énergétiques offrent une piste pour comprendre comment {traits} se traduit dans des projets de territoire.",
-    ],
-    preparationSteps: [
-      "Explorer les bases de l'électricité et du BTP via des modules proposés en lycée pro ou E2C.",
-      "Renforcer le travail en équipe sur des projets de chantier simulés ou encadrés.",
-      "Contacter un lycée professionnel voisin pour une visite de filière électrotechnique ou énergétique.",
-    ],
-    status: "Spéculatif",
-    learnMore: "https://www.onisep.fr/",
-  },
-];
-
-function normalizeProjectDataset(rows: typeof rawProjects): Project[] {
-  const parsedProjects = safeParseProjects(rows);
-
-  if (parsedProjects.length !== rows.length) {
-    console.warn("Project dataset fallback triggered");
-  }
-
-  return parsedProjects.map((project, index) => ({
-    ...project,
-    id: rows[index]?.id ?? project.id,
-  }));
-}
-
-export const PROJECTS: Project[] = normalizeProjectDataset(rawProjects);
+/**
+ * Local fallback dataset.
+ *
+ * Built from the CSV snapshot of the real project spreadsheet
+ * (`fallback-projects.csv` → `fallback-snapshot.ts`), passed through the EXACT
+ * same ingestion pipeline as the live Google Sheet (`safeParseProjects`). A
+ * Sheet row and a CSV row therefore produce identical `Project` objects — ids,
+ * arrays, skills, careers, preparationSteps, timeline, links and validation are
+ * all handled in one place. There are no hand-written / AI-generated projects.
+ *
+ * To update this dataset, refresh the CSV snapshot (see fallback-snapshot.ts).
+ */
+export const PROJECTS: Project[] = safeParseProjects(getFallbackProjectRows());
 
 /**
  * Source of raw, untrusted project rows (e.g. the Google Sheet connector).
@@ -399,27 +241,32 @@ export const PROJECTS: Project[] = normalizeProjectDataset(rawProjects);
  */
 export type RawProjectSource = () => Promise<unknown[]>;
 
+/** Where the served project data ultimately came from. Developer-facing only. */
+export type ProjectDataSource = "sheet" | "fallback";
+
 /**
  * Orchestration layer — single source of truth for project data.
  *
- * Flow: raw rows (from `source`) → safeParseProjects() → clean Project[].
+ * Loading order:
+ *   1. Attempt the external source (the Google Sheet, when wired in by the API).
+ *   2. If it succeeds with usable rows, use the live Sheet.
+ *   3. If it is absent, errors, or returns empty/invalid data, use the local
+ *      CSV fallback snapshot.
  *
- * The external source is treated as a weak, untrusted backend. The connector
- * (`sheets.ts`) pulls in googleapis, a Node-only package, and must never reach
- * the browser bundle. Because this module is shared with the client (matching.ts
- * and the UI import the mock dataset + questions from here), the connector is
- * injected by the server-only API route instead of being imported here.
+ * Both branches run through `safeParseProjects`, so the matching engine and UI
+ * receive the same `Project[]` shape and cannot tell where the data came from.
  *
- * If no source is provided, the source fails, or it yields no usable rows, we
- * fall back to the curated mock dataset and log a warning. This function must
- * never throw — youth guidance must keep working even when the sheet does not.
+ * Returns the resolved projects plus a developer-facing `source` tag (used for
+ * logging / response metadata only — never surfaced in the UI). Never throws.
  */
-export async function getProjects(source?: RawProjectSource): Promise<Project[]> {
+export async function loadProjects(
+  source?: RawProjectSource,
+): Promise<{ projects: Project[]; source: ProjectDataSource }> {
   if (!source) {
     console.warn(
-      "[data] No project source provided — using mock project dataset.",
+      "[data] No external source provided — using local CSV fallback snapshot.",
     );
-    return PROJECTS;
+    return { projects: PROJECTS, source: "fallback" };
   }
 
   try {
@@ -428,19 +275,27 @@ export async function getProjects(source?: RawProjectSource): Promise<Project[]>
 
     if (parsed.length === 0) {
       console.warn(
-        "[data] Project source returned no usable rows — using mock project dataset.",
+        "[data] External source returned no usable rows — using local CSV fallback snapshot.",
       );
-      return PROJECTS;
+      return { projects: PROJECTS, source: "fallback" };
     }
 
-    return parsed;
+    console.info(
+      `[data] Loaded ${parsed.length} projects from external source (Google Sheet).`,
+    );
+    return { projects: parsed, source: "sheet" };
   } catch (error) {
     console.warn(
-      "[data] Failed to load projects from external source — using mock project dataset.",
+      "[data] Failed to load from external source — using local CSV fallback snapshot.",
       error,
     );
-    return PROJECTS;
+    return { projects: PROJECTS, source: "fallback" };
   }
+}
+
+/** Convenience wrapper returning just the resolved projects. Never throws. */
+export async function getProjects(source?: RawProjectSource): Promise<Project[]> {
+  return (await loadProjects(source)).projects;
 }
 
 /** Synchronous project access for matching until recommendation flow is async. */

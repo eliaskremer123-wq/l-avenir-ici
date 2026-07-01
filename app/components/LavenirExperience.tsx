@@ -767,6 +767,11 @@ function DiscoverStage({
           {projectsStatus === "loading" && (
             <p className="mt-4 text-xs text-zinc-300">Chargement des données…</p>
           )}
+          <p className="mt-6 max-w-lg text-xs leading-relaxed text-zinc-400">
+            Cet outil est suggestif — il s&apos;appuie sur les compétences associées à
+            ces secteurs, et non sur un bilan psychologique ou scientifique.
+            N&apos;hésite pas à en parler avec ton conseiller.
+          </p>
           <div className="mt-8 space-y-6">
             {resolvedRecommendations.map(({ recommendation, project }, i) => (
               <RecommendationCard

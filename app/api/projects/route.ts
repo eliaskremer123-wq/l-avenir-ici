@@ -21,11 +21,30 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   try {
-    const source = hasSheetCredentials() ? getProjectsFromSheet : undefined;
+    const rawSource = hasSheetCredentials() ? getProjectsFromSheet : undefined;
+    let googleSheetsError: unknown;
+
+    const source = rawSource
+      ? async () => {
+          try {
+            return await rawSource();
+          } catch (error) {
+            googleSheetsError = error;
+            throw error;
+          }
+        }
+      : undefined;
+
     const { projects, source: usedSource } = await loadProjects(source);
 
-    console.info(
-      `[api/projects] Served ${projects.length} projects from source: ${usedSource}.`,
+    if (googleSheetsError) {
+      console.log("[GOOGLE SHEETS ERROR]", googleSheetsError);
+    }
+
+    console.log(
+      usedSource === "sheet"
+        ? `[DATA SOURCE] Google Sheets (${projects.length} projects)`
+        : `[DATA SOURCE] Fallback CSV (${projects.length} projects)`,
     );
 
     return Response.json(

@@ -100,12 +100,6 @@ export const QUESTIONS: Question[] = [
         reflectionPhrase: "les outils numériques et les données",
       },
       {
-        id: "chemistry",
-        label: "Sciences",
-        projectWeights: { chemistry: 4, hydrogen: 1 },
-        reflectionPhrase: "la chimie et les matériaux",
-      },
-      {
         id: "mechanics",
         label: "Travail manuel",
         projectWeights: { maintenance: 4, infrastructure: 2 },

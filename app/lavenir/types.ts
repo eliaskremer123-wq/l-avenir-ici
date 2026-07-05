@@ -5,6 +5,7 @@ export type Stage =
   | "analyze"
   | "transition"
   | "discover"
+  | "explore"
   | "continue";
 
 export type QuestionId =

@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import ExploreView from "./ExploreView";
 import { ANALYSIS_STEPS, PROJECTS, QUESTIONS, TERRITORY_TOPICS } from "../lavenir/data";
 import {
   buildPersonalSummary,
@@ -153,13 +155,75 @@ function LocationAutocomplete({
   value: string;
   onChange: (city: string) => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   // Suggestions appear on focus and disappear as soon as the user types.
   const showSuggestions = focused && value.trim().length === 0;
+
+  useEffect(() => {
+    if (!showSuggestions || !inputRef.current) {
+      setDropdownRect(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (!inputRef.current) return;
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownRect({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [showSuggestions]);
+
+  const dropdown =
+    showSuggestions && dropdownRect ? (
+      <ul
+        className="fixed z-[9999] max-h-60 overflow-y-auto rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/10"
+        style={{
+          top: dropdownRect.top,
+          left: dropdownRect.left,
+          width: dropdownRect.width,
+        }}
+      >
+        {CITY_SUGGESTIONS.map((city) => (
+          <li key={city}>
+            <button
+              type="button"
+              // onMouseDown fires before input blur, so the value is set reliably.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(city);
+                setFocused(false);
+              }}
+              className="block w-full border-0 bg-white px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50 focus-visible:bg-zinc-50 focus-visible:outline-none"
+            >
+              {city}
+            </button>
+          </li>
+        ))}
+      </ul>
+    ) : null;
 
   return (
     <div className="relative">
       <input
+        ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -170,26 +234,7 @@ function LocationAutocomplete({
         aria-label="Votre ville"
         className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 transition-colors focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
       />
-      {showSuggestions && (
-        <ul className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/5">
-          {CITY_SUGGESTIONS.map((city) => (
-            <li key={city}>
-              <button
-                type="button"
-                // onMouseDown fires before input blur, so the value is set reliably.
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onChange(city);
-                  setFocused(false);
-                }}
-                className="block w-full px-4 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50 focus-visible:bg-zinc-50 focus-visible:outline-none"
-              >
-                {city}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {dropdown && createPortal(dropdown, document.body)}
     </div>
   );
 }
@@ -581,6 +626,55 @@ function extractDriveFileId(url: string): string | null {
   return null;
 }
 
+/** Build the proxied image URL used by recommendation cards and preloading. */
+function projectImageProxyUrl(project: Project): string | undefined {
+  const imageUrl = project.imageUrl?.trim();
+  if (!imageUrl) return undefined;
+  const driveFileId = extractDriveFileId(imageUrl);
+  if (!driveFileId) return undefined;
+  return `/api/image?fileId=${encodeURIComponent(driveFileId)}`;
+}
+
+/** Tracks URLs already handed to the browser so preload + <img> never double-fetch. */
+const preloadedImageUrls = new Set<string>();
+
+const preloadImage = (url?: string) => {
+  if (!url || preloadedImageUrls.has(url)) return;
+  preloadedImageUrls.add(url);
+  const img = new Image();
+  img.src = url;
+};
+
+/** Progressive batch preload — first cards immediately, then staggered background loads. */
+function preloadProjectImagesBatch(projects: Project[]) {
+  const capped = projects.slice(0, 15);
+  if (capped.length === 0) return () => {};
+
+  capped.slice(0, 3).forEach((project) => preloadImage(projectImageProxyUrl(project)));
+
+  const timer2 = setTimeout(() => {
+    capped.slice(3, 8).forEach((project) => preloadImage(projectImageProxyUrl(project)));
+  }, 800);
+
+  const timer3 = setTimeout(() => {
+    capped.slice(8).forEach((project) => preloadImage(projectImageProxyUrl(project)));
+  }, 2000);
+
+  return () => {
+    clearTimeout(timer2);
+    clearTimeout(timer3);
+  };
+}
+
+function orderedProjectsFromRecommendations(
+  recommendations: Recommendation[],
+  projects: Project[],
+): Project[] {
+  return recommendations
+    .map((rec) => projects.find((p) => p.id === rec.projectId))
+    .filter((project): project is Project => Boolean(project));
+}
+
 /** Extract the YouTube video id from a standard watch or youtu.be URL. */
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -681,11 +775,7 @@ function RecommendationCard({
   const timeline = project.timeline?.trim() ?? "";
   const learnMore = project.learnMore?.trim() ?? "";
   const hasLearnMore = /^https?:\/\//i.test(learnMore);
-  const imageUrl = project.imageUrl?.trim() ?? "";
-  const driveFileId = imageUrl ? extractDriveFileId(imageUrl) : null;
-  const proxiedImageSrc = driveFileId
-    ? `/api/image?fileId=${encodeURIComponent(driveFileId)}`
-    : null;
+  const proxiedImageSrc = projectImageProxyUrl(project) ?? null;
   const videoUrl = project.videoUrl?.trim() ?? "";
   const youTubeId = videoUrl ? extractYouTubeId(videoUrl) : null;
   const imagePlaceholder =
@@ -700,10 +790,6 @@ function RecommendationCard({
           : GLASS_CARD,
       ].join(" ")}
     >
-      {isTopMatch && (
-        <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-gradient-to-r from-emerald-400/80 via-emerald-500 to-teal-500/70" />
-      )}
-
       {isTopMatch && (
         <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-emerald-700">
           Une piste à explorer
@@ -847,12 +933,14 @@ function DiscoverStage({
   projects,
   projectsStatus,
   onContinue,
+  onExplore,
 }: {
   personalSummary: string;
   recommendations: Recommendation[];
   projects: Project[];
   projectsStatus: "loading" | "ready" | "error";
   onContinue: () => void;
+  onExplore: () => void;
 }) {
   // Recommendations are ranked directly over the live /api/projects catalog, so
   // each one binds to its real project by id. The local dataset is used only as
@@ -975,7 +1063,14 @@ function DiscoverStage({
         )}
 
         {journeyDone && (
-        <div className="mt-20 flex justify-center pb-4">
+        <div className="mt-20 flex flex-col items-center gap-4 pb-4">
+          <button
+            type="button"
+            onClick={onExplore}
+            className="rounded-2xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-semibold text-zinc-100 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+          >
+            Explorer tous les projets
+          </button>
           <button
             type="button"
             onClick={onContinue}
@@ -1093,6 +1188,16 @@ export default function LavenirExperience() {
     };
   }, []);
 
+  // Preload ranked recommendation images only — not the full catalog (wrong order,
+  // often missing imageUrl on fallback). Timers cleaned on unmount / re-run.
+  useEffect(() => {
+    if (recommendations.length === 0) return;
+
+    return preloadProjectImagesBatch(
+      orderedProjectsFromRecommendations(recommendations, projects),
+    );
+  }, [recommendations, projects]);
+
   const handleAnswerChange = useCallback(
     (questionId: Exclude<QuestionId, "location">, value: string[] | string) => {
       setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -1132,6 +1237,10 @@ export default function LavenirExperience() {
 
   const handleAnalyzeComplete = useCallback(() => {
     const recs = computeRecommendations(answers, projects);
+    const ordered = orderedProjectsFromRecommendations(recs, projects);
+    // Start batch-1 preload synchronously so images warm during the transition
+    // screen — before useEffect runs and before the first card mounts.
+    preloadProjectImagesBatch(ordered);
     setRecommendations(recs);
     setPersonalSummary(buildPersonalSummary());
     setStage("transition");
@@ -1194,6 +1303,16 @@ export default function LavenirExperience() {
           projects={projects}
           projectsStatus={projectsStatus}
           onContinue={() => setStage("continue")}
+          onExplore={() => setStage("explore")}
+        />
+      )}
+
+      {stage === "explore" && (
+        <ExploreView
+          projects={projects}
+          projectsStatus={projectsStatus}
+          recommendations={recommendations}
+          onBack={() => setStage("discover")}
         />
       )}
 

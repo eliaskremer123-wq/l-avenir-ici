@@ -557,6 +557,65 @@ function AnalyzeStage({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+/** Extract a Google Drive file id from a raw id or common Drive URL formats. */
+function extractDriveFileId(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  if (/^[\w-]{10,}$/.test(trimmed) && !trimmed.includes("://")) {
+    return trimmed;
+  }
+
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([^/?#]+)/,
+    /drive\.google\.com\/open\?id=([^&]+)/,
+    /drive\.google\.com\/uc(?:\?[^#]*)?[?&]id=([^&]+)/,
+    /[?&]id=([^&]+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  return null;
+}
+
+/** Extract the YouTube video id from a standard watch or youtu.be URL. */
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/,
+  );
+  return match ? match[1] : null;
+}
+
+function TransitionStage({ onStart }: { onStart: () => void }) {
+  return (
+    <main className="mx-auto flex max-w-3xl flex-1 flex-col justify-center px-6 py-20 sm:px-10 sm:py-28">
+      <FadeIn className="mx-auto w-full max-w-xl">
+        <div className={`${GLASS_PANEL} px-8 py-14 text-center sm:px-12 sm:py-16`}>
+          <p className="text-sm font-medium tracking-wide text-emerald-700/75">
+            Analyse terminée
+          </p>
+          <h2 className="mx-auto mt-5 max-w-lg text-2xl font-semibold leading-snug tracking-tight text-zinc-900 sm:text-3xl sm:leading-tight">
+            Nous avons identifié plusieurs opportunités dans votre région
+          </h2>
+          <p className="mx-auto mt-6 max-w-md text-base leading-loose text-zinc-500">
+            Découvrons-les ensemble
+          </p>
+          <button
+            type="button"
+            onClick={onStart}
+            className="mt-12 rounded-2xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+          >
+            Commencer
+          </button>
+        </div>
+      </FadeIn>
+    </main>
+  );
+}
+
 function PreparationBlock({
   preparationSteps,
 }: {
@@ -597,11 +656,20 @@ function RecommendationCard({
   recommendation,
   project,
   isTopMatch,
+  expanded,
+  onExpand,
+  onNext,
+  nextLabel,
 }: {
   recommendation: Recommendation;
   project: Project;
   isTopMatch: boolean;
+  expanded: boolean;
+  onExpand: () => void;
+  onNext: () => void;
+  nextLabel: string;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
   // Defensive display guards: the live sheet is a weak backend, so any field
   // may arrive missing. Never render undefined or broken blocks.
   const name = project.name?.trim() || "Projet à découvrir";
@@ -613,6 +681,15 @@ function RecommendationCard({
   const timeline = project.timeline?.trim() ?? "";
   const learnMore = project.learnMore?.trim() ?? "";
   const hasLearnMore = /^https?:\/\//i.test(learnMore);
+  const imageUrl = project.imageUrl?.trim() ?? "";
+  const driveFileId = imageUrl ? extractDriveFileId(imageUrl) : null;
+  const proxiedImageSrc = driveFileId
+    ? `/api/image?fileId=${encodeURIComponent(driveFileId)}`
+    : null;
+  const videoUrl = project.videoUrl?.trim() ?? "";
+  const youTubeId = videoUrl ? extractYouTubeId(videoUrl) : null;
+  const imagePlaceholder =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'%3E%3Crect width='1200' height='675' fill='%23e4e4e7'/%3E%3Ccircle cx='600' cy='300' r='72' fill='%23a1a1aa'/%3E%3Cpath d='M270 535 470 365l130 115 115-95 215 150H270Z' fill='%23a1a1aa'/%3E%3C/svg%3E";
 
   return (
     <article
@@ -620,7 +697,7 @@ function RecommendationCard({
         "relative flex flex-col rounded-[1.75rem] p-8 transition-all duration-300 sm:p-10",
         isTopMatch
           ? "glass-panel border-emerald-200/70 shadow-[0_24px_64px_rgba(16,185,129,0.1)] ring-1 ring-emerald-100/60"
-          : `${GLASS_CARD} hover:-translate-y-1`,
+          : GLASS_CARD,
       ].join(" ")}
     >
       {isTopMatch && (
@@ -633,6 +710,16 @@ function RecommendationCard({
         </p>
       )}
 
+      {!expanded && proxiedImageSrc && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageFailed ? imagePlaceholder : proxiedImageSrc}
+          alt={name}
+          className="mb-6 h-48 w-full rounded-2xl object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      )}
+
       <h3 className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-[1.35rem]">
         {name}
       </h3>
@@ -640,10 +727,28 @@ function RecommendationCard({
         <p className="mt-1.5 text-sm font-medium text-zinc-500">{sector}</p>
       )}
       {description && (
-        <p className="mt-4 text-sm leading-loose text-zinc-700">{description}</p>
+        <p
+          className={[
+            "mt-4 text-sm leading-loose text-zinc-700",
+            expanded ? "" : "line-clamp-2",
+          ].join(" ")}
+        >
+          {description}
+        </p>
       )}
 
-      <div className="mt-8 space-y-6">
+      {!expanded && (
+        <button
+          type="button"
+          onClick={onExpand}
+          className="mt-8 self-start rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+        >
+          Découvrir ce projet
+        </button>
+      )}
+
+      {expanded && (
+      <div className="mt-8 animate-fade-in space-y-6">
         {recommendation.personalMatch && (
           <div>
             <p className="mb-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
@@ -689,6 +794,18 @@ function RecommendationCard({
 
         {steps.length > 0 && <PreparationBlock preparationSteps={steps} />}
 
+        {youTubeId && (
+          <div className="aspect-video w-full overflow-hidden rounded-2xl bg-zinc-900/5">
+            <iframe
+              className="h-full w-full"
+              src={`https://www.youtube.com/embed/${youTubeId}`}
+              title={`Vidéo — ${name}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )}
+
         {timeline && (
           <div className="rounded-2xl border border-zinc-200/60 bg-white/70 px-5 py-4 backdrop-blur-sm">
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
@@ -708,7 +825,18 @@ function RecommendationCard({
             Explorer ce secteur
           </a>
         )}
+
+        <div className="flex justify-end border-t border-zinc-100 pt-6">
+          <button
+            type="button"
+            onClick={onNext}
+            className="rounded-xl bg-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+          >
+            {nextLabel}
+          </button>
+        </div>
       </div>
+      )}
     </article>
   );
 }
@@ -740,6 +868,24 @@ function DiscoverStage({
       (entry): entry is { recommendation: Recommendation; project: Project } =>
         entry !== null,
     );
+
+  // Sequential one-at-a-time card flow — local UI state only. Only the current
+  // card is mounted; the territory section is revealed after the final card.
+  const total = resolvedRecommendations.length;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [journeyDone, setJourneyDone] = useState(total === 0);
+  const current = resolvedRecommendations[currentIndex];
+
+  const handleNextProject = () => {
+    if (currentIndex < total - 1) {
+      setCurrentIndex((i) => i + 1);
+      setExpanded(false);
+    } else {
+      setJourneyDone(true);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-16 sm:px-10 sm:py-24">
       <FadeIn>
@@ -756,6 +902,7 @@ function DiscoverStage({
           <p className="mt-5 text-base leading-loose text-zinc-700">{personalSummary}</p>
         </div>
 
+        {!journeyDone && (
         <div className="mt-20">
           <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
             Secteurs à explorer
@@ -772,19 +919,37 @@ function DiscoverStage({
             ces secteurs, et non sur un bilan psychologique ou scientifique.
             N&apos;hésite pas à en parler avec ton conseiller.
           </p>
-          <div className="mt-8 space-y-6">
-            {resolvedRecommendations.map(({ recommendation, project }, i) => (
-              <RecommendationCard
-                key={project.id}
-                recommendation={recommendation}
-                project={project}
-                isTopMatch={i === 0}
-              />
-            ))}
-          </div>
-        </div>
 
-        <section className="mt-24 border-t border-zinc-200/15 pt-20">
+          {current && (
+            <>
+              <p
+                className="mt-8 text-xs font-medium tabular-nums text-zinc-300"
+                aria-live="polite"
+              >
+                Projet {currentIndex + 1} / {total}
+              </p>
+              <div key={current.project.id} className="mt-4 animate-fade-in">
+                <RecommendationCard
+                  recommendation={current.recommendation}
+                  project={current.project}
+                  isTopMatch={currentIndex === 0}
+                  expanded={expanded}
+                  onExpand={() => setExpanded(true)}
+                  onNext={handleNextProject}
+                  nextLabel={
+                    currentIndex < total - 1
+                      ? "Projet suivant"
+                      : "Voir les transformations du territoire"
+                  }
+                />
+              </div>
+            </>
+          )}
+        </div>
+        )}
+
+        {journeyDone && (
+        <section className="mt-24 animate-fade-in border-t border-zinc-200/15 pt-20">
           <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
             Que se passe-t-il à Saint-Avold ?
           </h3>
@@ -807,7 +972,9 @@ function DiscoverStage({
             ))}
           </div>
         </section>
+        )}
 
+        {journeyDone && (
         <div className="mt-20 flex justify-center pb-4">
           <button
             type="button"
@@ -817,6 +984,7 @@ function DiscoverStage({
             Continuer l&apos;exploration
           </button>
         </div>
+        )}
       </FadeIn>
     </main>
   );
@@ -966,7 +1134,7 @@ export default function LavenirExperience() {
     const recs = computeRecommendations(answers, projects);
     setRecommendations(recs);
     setPersonalSummary(buildPersonalSummary());
-    setStage("discover");
+    setStage("transition");
   }, [answers, projects]);
 
   const handleRestart = () => {
@@ -1013,6 +1181,10 @@ export default function LavenirExperience() {
 
       {stage === "analyze" && (
         <AnalyzeStage onComplete={handleAnalyzeComplete} />
+      )}
+
+      {stage === "transition" && (
+        <TransitionStage onStart={() => setStage("discover")} />
       )}
 
       {stage === "discover" && (

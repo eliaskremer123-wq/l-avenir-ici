@@ -224,6 +224,13 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
       matchTemplates: safeArray(
         readRawField(raw, ["matchTemplates", "Match Templates", "Templates"]),
       ),
+      // Media columns are optional; empty/undefined cells stay undefined so the
+      // UI simply renders nothing. These fields are inert for scoring/ranking.
+      imageUrl:
+        safeString(readRawField(raw, ["Image (use for site)", "imageUrl"])) ||
+        undefined,
+      videoUrl:
+        safeString(readRawField(raw, ["Video URL", "videoUrl"])) || undefined,
     };
   } catch (error) {
     console.warn("Unable to map project row safely; using fallback project.", {

@@ -3,6 +3,7 @@ export type Stage =
   | "understand"
   | "reflect"
   | "analyze"
+  | "transition"
   | "discover"
   | "continue";
 
@@ -74,6 +75,10 @@ export type Project = {
   learnMore: string;
 
   matchTemplates: string[];
+
+  imageUrl?: string;
+
+  videoUrl?: string;
 };
 
 export type TerritoryTopic = {

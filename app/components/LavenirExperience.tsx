@@ -62,7 +62,7 @@ function Shell({ children }: { children: React.ReactNode }) {
               L&apos;Avenir Ici
             </span>
           </div>
-          <span className="text-xs tracking-wide text-zinc-300">Saint-Avold</span>
+          <span className="text-xs tracking-wide text-zinc-300">Lorraine</span>
         </div>
       </header>
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
@@ -70,7 +70,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto max-w-3xl px-6 py-6 sm:px-10">
           <p className="text-center text-xs leading-relaxed text-zinc-300">
             Un outil civique pour comprendre — et se projeter dans — l&apos;avenir
-            industriel de Saint-Avold
+            industriel de Lorraine
           </p>
         </div>
       </footer>
@@ -341,13 +341,19 @@ function ConversationProgress({
     </nav>
   );
 }
-export function WelcomeStage({ onStart }: { onStart: () => void }) {
+export function WelcomeStage({
+  onStart,
+  onExplore,
+}: {
+  onStart: () => void;
+  onExplore: () => void;
+}) {
   return (
     <main className="mx-auto flex max-w-3xl flex-1 flex-col justify-center px-6 py-24 sm:px-10 sm:py-32">
       <FadeIn className="mx-auto w-full max-w-xl">
         <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-8 py-14 text-center sm:px-14 sm:py-16">
           <p className="text-sm font-medium tracking-[0.08em] text-emerald-700/80 uppercase">
-            Saint-Avold se transforme
+            Lorraine se transforme
           </p>
           <h1 className="mt-6 text-5xl font-semibold leading-[1.08] tracking-tight text-zinc-900 sm:text-6xl">
             Bienvenue.
@@ -357,13 +363,22 @@ export function WelcomeStage({ onStart }: { onStart: () => void }) {
             exister. Avant de vous montrer où vous pourriez trouver votre place,
             nous voulons d&apos;abord comprendre qui vous êtes.
           </p>
-          <button
-            type="button"
-            onClick={onStart}
-            className="mt-14 w-full max-w-xs rounded-2xl bg-emerald-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 active:scale-[0.99] sm:w-auto"
-          >
-            Commencer
-          </button>
+          <div className="mt-14 flex flex-col items-center gap-4">
+            <button
+              type="button"
+              onClick={onStart}
+              className="w-full max-w-xs rounded-2xl bg-emerald-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 active:scale-[0.99] sm:w-auto"
+            >
+              Commencer
+            </button>
+            <button
+              type="button"
+              onClick={onExplore}
+              className="w-full max-w-xs rounded-2xl border border-zinc-200 bg-white px-8 py-4 text-base font-semibold text-zinc-600 transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 active:scale-[0.99] sm:w-auto"
+            >
+              Explorer les projets de la région
+            </button>
+          </div>
         </div>
       </FadeIn>
     </main>
@@ -1272,6 +1287,9 @@ export default function LavenirExperience() {
   const [projectsStatus, setProjectsStatus] = useState<
     "loading" | "ready" | "error"
   >("loading");
+  const [exploreReturnStage, setExploreReturnStage] = useState<
+    "welcome" | "discover"
+  >("discover");
 
   useEffect(() => {
     let cancelled = false;
@@ -1390,7 +1408,13 @@ export default function LavenirExperience() {
   return (
     <Shell>
       {stage === "welcome" && (
-        <WelcomeStage onStart={() => setStage("understand")} />
+        <WelcomeStage
+          onStart={() => setStage("understand")}
+          onExplore={() => {
+            setExploreReturnStage("welcome");
+            setStage("explore");
+          }}
+        />
       )}
 
       {stage === "understand" && (
@@ -1428,7 +1452,10 @@ export default function LavenirExperience() {
           projects={projects}
           projectsStatus={projectsStatus}
           onContinue={() => setStage("continue")}
-          onExplore={() => setStage("explore")}
+          onExplore={() => {
+            setExploreReturnStage("discover");
+            setStage("explore");
+          }}
         />
       )}
 
@@ -1437,7 +1464,12 @@ export default function LavenirExperience() {
           projects={projects}
           projectsStatus={projectsStatus}
           recommendations={recommendations}
-          onBack={() => setStage("discover")}
+          backLabel={
+            exploreReturnStage === "welcome"
+              ? "Retour à l'accueil"
+              : "Retour à mes recommandations"
+          }
+          onBack={() => setStage(exploreReturnStage)}
         />
       )}
 

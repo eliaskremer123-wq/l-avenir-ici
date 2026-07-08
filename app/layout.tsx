@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "L'Avenir Ici — Saint-Avold",
+  title: "L'Avenir Ici — Lorraine",
   description:
-    "Découvrez comment vous pourriez vous inscrire dans l'avenir industriel de Saint-Avold.",
+    "Découvrez comment vous pourriez vous inscrire dans l'avenir industriel de Lorraine.",
 };
 
 export default function RootLayout({

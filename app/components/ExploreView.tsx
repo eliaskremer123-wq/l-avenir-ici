@@ -331,11 +331,13 @@ export default function ExploreView({
   projectsStatus,
   recommendations = [],
   onBack,
+  backLabel = "Retour à mes recommandations",
 }: {
   projects: Project[];
   projectsStatus: "loading" | "ready" | "error";
   recommendations?: Recommendation[];
   onBack: () => void;
+  backLabel?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sectorFilter, setSectorFilter] = useState("");
@@ -403,7 +405,7 @@ export default function ExploreView({
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Retour à mes recommandations
+          {backLabel}
         </button>
 
         <div className="mt-8 max-w-2xl">

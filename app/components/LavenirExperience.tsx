@@ -675,6 +675,78 @@ function orderedProjectsFromRecommendations(
     .filter((project): project is Project => Boolean(project));
 }
 
+/** Deterministic gradient derived from the sector string (matches ExploreView). */
+function sectorGradient(sector: string): string {
+  let hash = 0;
+  for (let i = 0; i < sector.length; i++) {
+    hash = (hash * 31 + sector.charCodeAt(i)) % 360;
+  }
+  const hue = Math.abs(hash);
+  const hue2 = (hue + 38) % 360;
+  return `linear-gradient(135deg, hsl(${hue} 42% 32%), hsl(${hue2} 48% 22%))`;
+}
+
+function RecapProjectPlaceholder({ project }: { project: Project }) {
+  const label = project.sector?.trim() || project.name?.trim() || "Projet";
+  return (
+    <div
+      className="flex h-28 w-full items-center justify-center rounded-xl sm:h-32"
+      style={{ background: sectorGradient(project.sector || project.name) }}
+      aria-hidden="true"
+    >
+      <span className="px-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-white/85">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function RecapProjectThumbnail({ project }: { project: Project }) {
+  const [failed, setFailed] = useState(false);
+  const src = projectImageProxyUrl(project);
+
+  if (!src || failed) {
+    return <RecapProjectPlaceholder project={project} />;
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={project.name?.trim() || "Projet"}
+      className="h-28 w-full rounded-xl object-cover sm:h-32"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function RecapProjectCard({
+  project,
+  onSelect,
+}: {
+  project: Project;
+  onSelect: () => void;
+}) {
+  const name = project.name?.trim() || "Projet à découvrir";
+  const sector = project.sector?.trim() ?? "";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`${GLASS_CARD} flex flex-col p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2`}
+    >
+      <RecapProjectThumbnail project={project} />
+      <h4 className="mt-3 text-sm font-semibold tracking-tight text-zinc-900">{name}</h4>
+      {sector && (
+        <span className="mt-2 inline-flex self-start rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+          {sector}
+        </span>
+      )}
+    </button>
+  );
+}
+
 /** Extract the YouTube video id from a standard watch or youtu.be URL. */
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -981,6 +1053,7 @@ function DiscoverStage({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [journeyDone, setJourneyDone] = useState(total === 0);
+  const [showTerritory, setShowTerritory] = useState(false);
   const current = resolvedRecommendations[currentIndex];
 
   const handleNextProject = () => {
@@ -997,6 +1070,12 @@ function DiscoverStage({
       setCurrentIndex((i) => i - 1);
       setExpanded(false);
     }
+  };
+
+  const handleRecapSelect = (index: number) => {
+    setCurrentIndex(index);
+    setExpanded(false);
+    setJourneyDone(false);
   };
 
   return (
@@ -1054,7 +1133,7 @@ function DiscoverStage({
                   nextLabel={
                     currentIndex < total - 1
                       ? "Projet suivant"
-                      : "Voir les transformations du territoire"
+                      : "Voir le récapitulatif"
                   }
                 />
               </div>
@@ -1064,7 +1143,45 @@ function DiscoverStage({
         )}
 
         {journeyDone && (
-        <section className="mt-24 animate-fade-in border-t border-zinc-200/15 pt-20">
+        <section className="mt-20 animate-fade-in">
+          <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
+            Vos pistes à explorer
+          </h3>
+          <p className="mt-3 max-w-lg text-sm leading-loose text-zinc-300">
+            Retrouvez ici les secteurs que nous avons identifiés pour vous. Cliquez
+            sur une piste pour la revoir en détail.
+          </p>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            {resolvedRecommendations.map((entry, index) => (
+              <RecapProjectCard
+                key={entry.project.id}
+                project={entry.project}
+                onSelect={() => handleRecapSelect(index)}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={onExplore}
+            className="mt-10 w-full rounded-2xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+          >
+            Explorer tous les projets de la région
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowTerritory((v) => !v)}
+            className="mt-5 w-full text-center text-sm font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+          >
+            Voir les transformations du territoire
+          </button>
+        </section>
+        )}
+
+        {journeyDone && showTerritory && (
+        <section className="mt-16 animate-fade-in border-t border-zinc-200/15 pt-16">
           <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
             Que se passe-t-il à Saint-Avold ?
           </h3>
@@ -1087,25 +1204,6 @@ function DiscoverStage({
             ))}
           </div>
         </section>
-        )}
-
-        {journeyDone && (
-        <div className="mt-20 flex flex-col items-center gap-4 pb-4">
-          <button
-            type="button"
-            onClick={onExplore}
-            className="rounded-2xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-semibold text-zinc-100 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
-          >
-            Explorer tous les projets
-          </button>
-          <button
-            type="button"
-            onClick={onContinue}
-            className="rounded-2xl bg-zinc-900 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-zinc-900/10 transition-all duration-300 hover:-translate-y-0.5 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
-          >
-            Continuer l&apos;exploration
-          </button>
-        </div>
         )}
       </FadeIn>
     </main>

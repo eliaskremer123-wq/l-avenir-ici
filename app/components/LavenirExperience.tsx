@@ -753,6 +753,8 @@ function RecommendationCard({
   expanded,
   onExpand,
   onNext,
+  onPrevious,
+  showPrevious,
   nextLabel,
 }: {
   recommendation: Recommendation;
@@ -761,6 +763,8 @@ function RecommendationCard({
   expanded: boolean;
   onExpand: () => void;
   onNext: () => void;
+  onPrevious: () => void;
+  showPrevious: boolean;
   nextLabel: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -912,7 +916,21 @@ function RecommendationCard({
           </a>
         )}
 
-        <div className="flex justify-end border-t border-zinc-100 pt-6">
+        <div
+          className={[
+            "flex border-t border-zinc-100 pt-6",
+            showPrevious ? "justify-between" : "justify-end",
+          ].join(" ")}
+        >
+          {showPrevious && (
+            <button
+              type="button"
+              onClick={onPrevious}
+              className="rounded-xl bg-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            >
+              Projet précédent
+            </button>
+          )}
           <button
             type="button"
             onClick={onNext}
@@ -974,6 +992,13 @@ function DiscoverStage({
     }
   };
 
+  const handlePreviousProject = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((i) => i - 1);
+      setExpanded(false);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-3xl flex-1 px-6 py-16 sm:px-10 sm:py-24">
       <FadeIn>
@@ -1024,6 +1049,8 @@ function DiscoverStage({
                   expanded={expanded}
                   onExpand={() => setExpanded(true)}
                   onNext={handleNextProject}
+                  onPrevious={handlePreviousProject}
+                  showPrevious={currentIndex > 0}
                   nextLabel={
                     currentIndex < total - 1
                       ? "Projet suivant"

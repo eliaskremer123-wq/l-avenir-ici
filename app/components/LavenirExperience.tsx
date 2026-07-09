@@ -1037,6 +1037,7 @@ function DiscoverStage({
   recommendations,
   projects,
   projectsStatus,
+  startOnRecap = false,
   onContinue,
   onExplore,
 }: {
@@ -1044,6 +1045,7 @@ function DiscoverStage({
   recommendations: Recommendation[];
   projects: Project[];
   projectsStatus: "loading" | "ready" | "error";
+  startOnRecap?: boolean;
   onContinue: () => void;
   onExplore: () => void;
 }) {
@@ -1067,8 +1069,9 @@ function DiscoverStage({
   const total = resolvedRecommendations.length;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const [journeyDone, setJourneyDone] = useState(total === 0);
+  const [journeyDone, setJourneyDone] = useState(total === 0 || startOnRecap);
   const [showTerritory, setShowTerritory] = useState(false);
+  const [viewingFromRecap, setViewingFromRecap] = useState(false);
   const current = resolvedRecommendations[currentIndex];
 
   const handleNextProject = () => {
@@ -1091,6 +1094,12 @@ function DiscoverStage({
     setCurrentIndex(index);
     setExpanded(false);
     setJourneyDone(false);
+    setViewingFromRecap(true);
+  };
+
+  const handleBackToRecap = () => {
+    setExpanded(false);
+    setJourneyDone(true);
   };
 
   return (
@@ -1129,8 +1138,34 @@ function DiscoverStage({
 
           {current && (
             <>
+              {viewingFromRecap && (
+                <button
+                  type="button"
+                  onClick={handleBackToRecap}
+                  className="mt-8 inline-flex items-center gap-2 rounded-lg text-sm font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Retour au récapitulatif
+                </button>
+              )}
               <p
-                className="mt-8 text-xs font-medium tabular-nums text-zinc-300"
+                className={[
+                  "text-xs font-medium tabular-nums text-zinc-300",
+                  viewingFromRecap ? "mt-4" : "mt-8",
+                ].join(" ")}
                 aria-live="polite"
               >
                 Projet {currentIndex + 1} / {total}
@@ -1290,6 +1325,7 @@ export default function LavenirExperience() {
   const [exploreReturnStage, setExploreReturnStage] = useState<
     "welcome" | "discover"
   >("discover");
+  const [discoverShowRecap, setDiscoverShowRecap] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1397,6 +1433,7 @@ export default function LavenirExperience() {
     setReflection("");
     setRecommendations([]);
     setPersonalSummary("");
+    setDiscoverShowRecap(false);
   };
 
   const handleExploreOther = () => {
@@ -1442,7 +1479,12 @@ export default function LavenirExperience() {
       )}
 
       {stage === "transition" && (
-        <TransitionStage onStart={() => setStage("discover")} />
+        <TransitionStage
+          onStart={() => {
+            setDiscoverShowRecap(false);
+            setStage("discover");
+          }}
+        />
       )}
 
       {stage === "discover" && (
@@ -1451,9 +1493,11 @@ export default function LavenirExperience() {
           recommendations={recommendations}
           projects={projects}
           projectsStatus={projectsStatus}
+          startOnRecap={discoverShowRecap}
           onContinue={() => setStage("continue")}
           onExplore={() => {
             setExploreReturnStage("discover");
+            setDiscoverShowRecap(true);
             setStage("explore");
           }}
         />

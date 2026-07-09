@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ExploreView from "./ExploreView";
-import { ANALYSIS_STEPS, PROJECTS, QUESTIONS, TERRITORY_TOPICS } from "../lavenir/data";
+import { ANALYSIS_STEPS, PROJECTS, QUESTIONS } from "../lavenir/data";
 import {
   buildPersonalSummary,
   buildReflection,
@@ -36,6 +36,40 @@ const GLASS_CARD =
   "glass-panel-subtle rounded-2xl border border-zinc-200/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)]";
 const QUESTIONNAIRE_CARD =
   "mx-auto flex w-full max-w-xl flex-col rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-sm md:max-w-2xl";
+
+const LORRAINE_TERRITORY_TOPICS = [
+  {
+    id: "hydrogen",
+    title: "L'hydrogène bas carbone",
+    summary:
+      "La Lorraine se positionne comme un pôle énergétique majeur en Europe.",
+    detail:
+      "Des projets de production d'hydrogène vert émergent sur plusieurs sites de la région, visant à décarboner l'industrie lourde et à faire naître de nouvelles compétences dans l'énergie de demain.",
+  },
+  {
+    id: "chemistry",
+    title: "La chimie circulaire",
+    summary:
+      "Les anciens sites industriels lorrains se transforment pour recycler et valoriser les matériaux.",
+    detail:
+      "Plutôt que de tout jeter, l'industrie repense ses cycles : moins de déchets, plus de savoir-faire techniques, et une filière qui a du sens pour l'environnement et pour l'emploi local.",
+  },
+  {
+    id: "transition",
+    title: "La transition industrielle",
+    summary: "La Lorraine ne disparaît pas — elle se réinvente.",
+    detail:
+      "Des milliers d'emplois industriels ont existé ici. La reconversion n'efface pas cette histoire : elle la prolonge avec de nouveaux métiers, souvent plus proches de ce qui se construit aujourd'hui en Europe.",
+  },
+  {
+    id: "investment",
+    title: "Les investissements de demain",
+    summary:
+      "Des milliards d'euros sont engagés pour reconstruire la base industrielle régionale.",
+    detail:
+      "Ces projets ne sont pas abstraits : ils signifient des formations, des stages, des immersions et des secteurs à explorer pour les jeunes du territoire lorrain.",
+  },
+] as const;
 
 function ExperienceBackdrop() {
   return (
@@ -1233,14 +1267,14 @@ function DiscoverStage({
         {journeyDone && showTerritory && (
         <section className="mt-16 animate-fade-in border-t border-zinc-200/15 pt-16">
           <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
-            Que se passe-t-il à Saint-Avold ?
+            Que se passe-t-il en Lorraine ?
           </h3>
           <p className="mt-4 max-w-xl text-sm leading-loose text-zinc-300">
             Votre parcours personnel s&apos;inscrit dans une transformation plus
-            large. Voici les grands mouvements qui redessinent le territoire.
+            large. Voici les grands mouvements qui redessinent la région.
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2">
-            {TERRITORY_TOPICS.map((topic) => (
+            {LORRAINE_TERRITORY_TOPICS.map((topic) => (
               <article
                 key={topic.id}
                 className={`${GLASS_CARD} p-7 sm:p-8`}

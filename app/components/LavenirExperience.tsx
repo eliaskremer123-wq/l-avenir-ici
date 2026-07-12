@@ -71,6 +71,56 @@ const LORRAINE_TERRITORY_TOPICS = [
   },
 ] as const;
 
+const WELCOME_BACKGROUND_IMAGE_IDS = [
+  "1IdAeE18lGbeZR6wlpcJ3CBRgF4wIynnI",
+  "1ALyq_Sj5rkgC48pHjzwtCr84qLWxLkBr",
+  "1eD_pdOxbVMd0OSpzyNLDXZ_pWVBJYJyX",
+  "1UAiPp5m1esQHMFlRNTUMZmbDB3l9CrIh",
+  "10QVpT34SGx8Mz3KwrE_TaL1UAL1iJnDo",
+  "1RBdkyWSd7A8L-SM13gTlJLdxd0eCJVhp",
+  "1pgYJti8NES_JmjaEgO8hqsIOamwBJQPj",
+] as const;
+
+const WELCOME_BACKGROUND_IMAGES = WELCOME_BACKGROUND_IMAGE_IDS.map(
+  (fileId) => `/api/image?fileId=${encodeURIComponent(fileId)}`,
+);
+
+function WelcomeBackgroundCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (WELCOME_BACKGROUND_IMAGES.length <= 1) return;
+
+    const intervalId = window.setInterval(() => {
+      setActiveIndex(
+        (current) => (current + 1) % WELCOME_BACKGROUND_IMAGES.length,
+      );
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      aria-hidden="true"
+    >
+      {WELCOME_BACKGROUND_IMAGES.map((url, index) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={url}
+          alt=""
+          src={url}
+          className={[
+            "absolute inset-0 h-full w-full object-cover transition-opacity duration-[2000ms] ease-in-out",
+            index === activeIndex ? "opacity-[0.38]" : "opacity-0",
+          ].join(" ")}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ExperienceBackdrop() {
   return (
     <div className="experience-backdrop" aria-hidden="true">
@@ -82,21 +132,26 @@ function ExperienceBackdrop() {
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({
+  children,
+  pinHeader = true,
+}: {
+  children: React.ReactNode;
+  pinHeader?: boolean;
+}) {
   return (
     <div className="relative flex min-h-full flex-col font-sans text-zinc-900">
       <ExperienceBackdrop />
-      <header className="sticky top-0 z-20">
-        <div className="relative mx-auto flex max-w-3xl items-center justify-between px-6 py-5 sm:px-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600/10 ring-1 ring-emerald-600/10">
-              <div className="h-2 w-2 rounded-full bg-emerald-600" />
-            </div>
-            <span className="text-sm font-semibold tracking-tight text-zinc-100">
-              L&apos;Avenir Ici
-            </span>
-          </div>
-          <span className="text-xs tracking-wide text-zinc-300">Lorraine</span>
+      <header
+        className={[
+          "z-20 border-b border-zinc-200/15",
+          pinHeader ? "sticky top-0" : "relative",
+        ].join(" ")}
+      >
+        <div className="relative mx-auto flex w-full max-w-3xl items-center justify-center px-6 py-5 sm:px-10">
+          <span className="text-base font-semibold tracking-tight text-zinc-100 sm:text-lg">
+            L&apos;Avenir Ici
+          </span>
         </div>
       </header>
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
@@ -383,8 +438,9 @@ export function WelcomeStage({
   onExplore: () => void;
 }) {
   return (
-    <main className="mx-auto flex max-w-3xl flex-1 flex-col justify-center px-6 py-24 sm:px-10 sm:py-32">
-      <FadeIn className="mx-auto w-full max-w-xl">
+    <main className="relative flex w-full flex-1 flex-col justify-center overflow-hidden px-6 py-24 sm:px-10 sm:py-32">
+      <WelcomeBackgroundCarousel />
+      <FadeIn className="relative z-10 mx-auto w-full max-w-xl">
         <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl px-8 py-14 text-center sm:px-14 sm:py-16">
           <p className="text-sm font-medium tracking-[0.08em] text-emerald-700/80 uppercase">
             Lorraine se transforme
@@ -1477,7 +1533,7 @@ export default function LavenirExperience() {
   };
 
   return (
-    <Shell>
+    <Shell pinHeader={stage !== "explore"}>
       {stage === "welcome" && (
         <WelcomeStage
           onStart={() => setStage("understand")}

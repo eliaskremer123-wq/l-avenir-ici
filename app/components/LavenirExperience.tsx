@@ -17,6 +17,8 @@ import type {
   Recommendation,
   Stage,
 } from "../lavenir/types";
+import { formatProjectStatusLabel } from "../lavenir/timeline-status";
+import { resolveRecommendationProject } from "../lavenir/project-resolution";
 
 const INITIAL_ANSWERS: Answers = {
   location: "",
@@ -776,7 +778,7 @@ function orderedProjectsFromRecommendations(
   projects: Project[],
 ): Project[] {
   return recommendations
-    .map((rec) => projects.find((p) => p.id === rec.projectId))
+    .map((rec) => resolveRecommendationProject(rec, projects, PROJECTS))
     .filter((project): project is Project => Boolean(project));
 }
 
@@ -950,10 +952,10 @@ function RecommendationCard({
   const name = project.name?.trim() || "Projet à découvrir";
   const sector = project.sector?.trim() ?? "";
   const description = project.description?.trim() ?? "";
+  const statusLabel = formatProjectStatusLabel(project);
   const careers = project.careers ?? [];
   const skills = project.skills ?? [];
   const steps = project.preparationSteps ?? [];
-  const timeline = project.timeline?.trim() ?? "";
   const learnMore = project.learnMore?.trim() ?? "";
   const hasLearnMore = /^https?:\/\//i.test(learnMore);
   const proxiedImageSrc = projectImageProxyUrl(project) ?? null;
@@ -992,6 +994,9 @@ function RecommendationCard({
       </h3>
       {sector && (
         <p className="mt-1.5 text-sm font-medium text-zinc-500">{sector}</p>
+      )}
+      {statusLabel && (
+        <p className="mt-1.5 text-sm font-medium text-zinc-500">{statusLabel}</p>
       )}
       {description && (
         <p
@@ -1073,12 +1078,12 @@ function RecommendationCard({
           </div>
         )}
 
-        {timeline && (
+        {statusLabel && (
           <div className="rounded-2xl border border-zinc-200/60 bg-white/70 px-5 py-4 backdrop-blur-sm">
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
               Horizon
             </p>
-            <p className="text-sm leading-loose text-zinc-700">{timeline}</p>
+            <p className="text-sm leading-loose text-zinc-700">{statusLabel}</p>
           </div>
         )}
 
@@ -1144,9 +1149,11 @@ function DiscoverStage({
   // a last-resort safety fallback so a card is never blank.
   const resolvedRecommendations = recommendations
     .map((recommendation) => {
-      const project =
-        projects.find((p) => p.id === recommendation.projectId) ??
-        PROJECTS.find((p) => p.id === recommendation.projectId);
+      const project = resolveRecommendationProject(
+        recommendation,
+        projects,
+        PROJECTS,
+      );
       return project ? { recommendation, project } : null;
     })
     .filter(

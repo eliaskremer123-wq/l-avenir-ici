@@ -47,13 +47,18 @@ export type Question = {
 };
 
 export type Recommendation = {
-  projectId: string;
+  stableProjectKey: string;
+  /** Legacy row-index id — used for id-first resolution when present. */
+  projectId?: string;
   score: number;
   personalMatch: string;
 };
 
 export type Project = {
   id: string;
+
+  /** Row-index-independent identity key for API/static project matching. */
+  stableProjectKey: string;
 
   name: string;
 
@@ -80,6 +85,10 @@ export type Project = {
   imageUrl?: string;
 
   videoUrl?: string;
+
+  targetYear?: number | "active" | "indeterminate" | "longterm";
+
+  submittedAt?: string;
 };
 
 export type TerritoryTopic = {

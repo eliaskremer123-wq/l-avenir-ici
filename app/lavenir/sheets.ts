@@ -24,6 +24,31 @@ const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
 type RawRow = Record<string, string>;
 
+export type EnrichedRawRow = RawRow & {
+  submittedAt?: string;
+};
+
+function parseSubmittedAt(raw: string): string | undefined {
+  if (!raw || raw.trim() === "") return undefined;
+  const date = new Date(raw.trim());
+  if (isNaN(date.getTime())) return undefined;
+  const formatted = date.toLocaleDateString("fr-FR", {
+    month: "long",
+    year: "numeric",
+  });
+  return `${formatted}.`;
+}
+
+function enrichRawRow(record: RawRow): EnrichedRawRow {
+  const timestampRaw = record.Timestamp ?? "";
+  const submittedAt = parseSubmittedAt(timestampRaw);
+
+  return {
+    ...record,
+    ...(submittedAt ? { submittedAt } : {}),
+  } as EnrichedRawRow;
+}
+
 export function hasSheetCredentials(): boolean {
   return Boolean(SHEET_ID && CLIENT_EMAIL && PRIVATE_KEY);
 }
@@ -35,7 +60,7 @@ export function hasSheetCredentials(): boolean {
  * map to `Project`. Throws if credentials are missing or the API call fails;
  * callers are responsible for falling back to a safe dataset.
  */
-export async function getProjectsFromSheet(): Promise<RawRow[]> {
+export async function getProjectsFromSheet(): Promise<EnrichedRawRow[]> {
   if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
     throw new Error(
       "Missing Google Sheets credentials (GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, NEXT_PUBLIC_GOOGLE_SHEET_ID).",
@@ -71,6 +96,6 @@ export async function getProjectsFromSheet(): Promise<RawRow[]> {
       if (!header) return;
       record[header] = String(row[index] ?? "").trim();
     });
-    return record;
+    return enrichRawRow(record);
   });
 }

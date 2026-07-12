@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Project, Recommendation } from "../lavenir/types";
+import { formatProjectStatusLabel } from "../lavenir/timeline-status";
 
 /** Extract a Google Drive file id from a raw id or common Drive URL formats. */
 function extractDriveFileId(url: string): string | null {
@@ -120,7 +121,7 @@ function ExploreCard({
   const name = project.name?.trim() || "Projet à découvrir";
   const sector = project.sector?.trim() ?? "";
   const city = project.city?.trim() ?? "";
-  const timeline = project.timeline?.trim() ?? "";
+  const statusLabel = formatProjectStatusLabel(project);
 
   return (
     <button
@@ -152,9 +153,9 @@ function ExploreCard({
               {sector}
             </span>
           )}
-          {timeline && (
+          {statusLabel && (
             <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
-              {timeline}
+              {statusLabel}
             </span>
           )}
         </div>
@@ -181,7 +182,7 @@ function ProjectModal({
   const careers = project.careers ?? [];
   const skills = project.skills ?? [];
   const steps = project.preparationSteps ?? [];
-  const timeline = project.timeline?.trim() ?? "";
+  const statusLabel = formatProjectStatusLabel(project);
   const learnMore = project.learnMore?.trim() ?? "";
   const hasLearnMore = /^https?:\/\//i.test(learnMore);
   const videoUrl = project.videoUrl?.trim() ?? "";
@@ -225,9 +226,9 @@ function ProjectModal({
               {city}
             </span>
           )}
-          {timeline && (
+          {statusLabel && (
             <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
-              {timeline}
+              {statusLabel}
             </span>
           )}
         </div>
@@ -301,12 +302,12 @@ function ProjectModal({
             </div>
           )}
 
-          {timeline && (
+          {statusLabel && (
             <div className="rounded-2xl border border-zinc-200/60 bg-zinc-50 px-5 py-4">
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
                 Horizon
               </p>
-              <p className="text-sm leading-loose text-zinc-700">{timeline}</p>
+              <p className="text-sm leading-loose text-zinc-700">{statusLabel}</p>
             </div>
           )}
 
@@ -345,8 +346,8 @@ export default function ExploreView({
   const [timelineFilter, setTimelineFilter] = useState("");
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
-  const recommendedIds = useMemo(
-    () => new Set(recommendations.map((rec) => rec.projectId)),
+  const recommendedKeys = useMemo(
+    () => new Set(recommendations.map((rec) => rec.stableProjectKey)),
     [recommendations],
   );
 
@@ -531,7 +532,7 @@ export default function ExploreView({
               <ExploreCard
                 key={project.id}
                 project={project}
-                recommended={recommendedIds.has(project.id)}
+                recommended={recommendedKeys.has(project.stableProjectKey)}
                 onOpen={() => setActiveProject(project)}
               />
             ))}

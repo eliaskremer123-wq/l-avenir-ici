@@ -1,4 +1,7 @@
 import type { Project } from "./types";
+import { buildStableProjectKey } from "./stable-project-key";
+import { resolveTargetYearFromFields } from "./parse-target-year";
+import { deriveProjectTimeline } from "./timeline-status";
 
 type RawRecord = Record<string, unknown>;
 
@@ -153,6 +156,7 @@ function cleanText(value: unknown): string {
 export function validateProject(p: any): boolean {
   return (
     typeof p?.id === "string" &&
+    typeof p?.stableProjectKey === "string" &&
     typeof p?.name === "string" &&
     typeof p?.city === "string" &&
     typeof p?.sector === "string" &&
@@ -172,12 +176,28 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
     const city = normalizeCity(
       safeString(readRawField(raw, ["Ville", "Emplacement", "city", "City"])),
     );
+    const sector = cleanText(readRawField(raw, ["sector", "Secteur"]));
+    const targetYear = resolveTargetYearFromFields({
+      preParsed: raw?.targetYear,
+      openingYearRaw: safeString(
+        readRawField(raw, [
+          "Année d'ouverture prévue",
+          "Annee d'ouverture prevue",
+          "targetYear",
+          "Target Year",
+        ]),
+      ),
+      legacyTimelineRaw: cleanText(
+        readRawField(raw, ["timeline", "Timeline", "Chronologie", "Horizon"]),
+      ),
+    });
 
-    return {
+    const project = {
       id: slug(`${name} ${city} ${fallbackIndex}`),
+      stableProjectKey: buildStableProjectKey(name, city, sector),
       name,
       city,
-      sector: cleanText(readRawField(raw, ["sector", "Secteur"])),
+      sector,
       description: cleanText(readRawField(raw, ["description", "Description"])),
       careers: safeArray(
         readRawField(raw, [
@@ -206,9 +226,7 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
           "Préparation",
         ]),
       ),
-      timeline:
-        cleanText(readRawField(raw, ["timeline", "Timeline", "Chronologie", "Horizon"])) ||
-        "Indéterminé",
+      timeline: deriveProjectTimeline(targetYear),
       status:
         cleanText(readRawField(raw, ["status", "Status", "Statut"])) || "Spéculatif",
       learnMore:
@@ -231,7 +249,13 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
         undefined,
       videoUrl:
         safeString(readRawField(raw, ["Video URL", "videoUrl"])) || undefined,
+      targetYear,
+      ...(typeof raw?.submittedAt === "string" && raw.submittedAt
+        ? { submittedAt: raw.submittedAt }
+        : {}),
     };
+
+    return project;
   } catch (error) {
     console.warn("Unable to map project row safely; using fallback project.", {
       error,
@@ -240,6 +264,7 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
 
     return {
       id: slug(`project ${fallbackIndex}`),
+      stableProjectKey: slug(`project ${fallbackIndex}`),
       name: "",
       city: "",
       sector: "",
@@ -249,6 +274,7 @@ export function safeMapToProject(raw: any, fallbackIndex: number): Project {
       preparationSteps: [],
       timeline: "Indéterminé",
       status: "Spéculatif",
+      targetYear: "indeterminate",
       learnMore: "#",
       matchTemplates: [],
     };

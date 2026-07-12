@@ -201,6 +201,7 @@ export function computeRecommendations(
     .sort((a, b) => b.score - a.score || a.index - b.index);
 
   return ranked.slice(0, Math.min(MAX_RESULTS, pool.length)).map((entry) => ({
+    stableProjectKey: entry.project.stableProjectKey,
     projectId: entry.project.id,
     score: entry.score,
     personalMatch: buildMatchSentence(entry.matchedPhrases),

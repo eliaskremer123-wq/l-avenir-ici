@@ -1205,15 +1205,15 @@ function RecommendationCard({
 
         <div
           className={[
-            "flex border-t border-zinc-100 pt-6",
-            showPrevious ? "justify-between" : "justify-end",
+            "flex flex-col gap-3 border-t border-zinc-100 pt-6 sm:flex-row sm:items-center",
+            showPrevious ? "sm:justify-between" : "sm:justify-end",
           ].join(" ")}
         >
           {showPrevious && (
             <button
               type="button"
               onClick={onPrevious}
-              className="rounded-xl bg-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+              className="w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 sm:w-auto sm:px-7"
             >
               Projet précédent
             </button>
@@ -1221,7 +1221,7 @@ function RecommendationCard({
           <button
             type="button"
             onClick={onNext}
-            className="rounded-xl bg-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            className="w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 sm:w-auto sm:px-7"
           >
             {nextLabel}
           </button>

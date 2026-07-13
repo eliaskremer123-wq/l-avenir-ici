@@ -13,9 +13,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lavenirici.org"),
   title: "L'Avenir Ici — Lorraine",
   description:
     "Découvrez comment vous pourriez vous inscrire dans l'avenir industriel de Lorraine.",
+  openGraph: {
+    title: "L'Avenir Ici — Lorraine",
+    description:
+      "Découvrez comment vous pourriez vous inscrire dans l'avenir industriel de Lorraine.",
+    url: "https://lavenirici.org",
+    siteName: "L'Avenir Ici",
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "L'Avenir Ici — Lorraine",
+    description:
+      "Découvrez comment vous pourriez vous inscrire dans l'avenir industriel de Lorraine.",
+  },
 };
 
 export default function RootLayout({

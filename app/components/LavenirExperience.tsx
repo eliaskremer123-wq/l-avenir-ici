@@ -137,9 +137,13 @@ function ExperienceBackdrop() {
 function Shell({
   children,
   pinHeader = true,
+  onHomeClick,
+  onContactClick,
 }: {
   children: React.ReactNode;
   pinHeader?: boolean;
+  onHomeClick: () => void;
+  onContactClick: () => void;
 }) {
   return (
     <div className="relative flex min-h-full flex-col font-sans text-zinc-900">
@@ -151,9 +155,13 @@ function Shell({
         ].join(" ")}
       >
         <div className="relative mx-auto flex w-full max-w-3xl items-center justify-center px-6 py-5 sm:px-10">
-          <span className="text-base font-semibold tracking-tight text-zinc-100 sm:text-lg">
+          <button
+            type="button"
+            onClick={onHomeClick}
+            className="text-base font-semibold tracking-tight text-zinc-100 transition-opacity hover:opacity-80 sm:text-lg"
+          >
             L&apos;Avenir Ici
-          </span>
+          </button>
         </div>
       </header>
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
@@ -163,6 +171,13 @@ function Shell({
             Un outil civique pour comprendre — et se projeter dans — l&apos;avenir
             industriel de Lorraine
           </p>
+          <button
+            type="button"
+            onClick={onContactClick}
+            className="mx-auto mt-3 block text-xs font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-200 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a]"
+          >
+            Contact
+          </button>
         </div>
       </footer>
     </div>
@@ -854,6 +869,89 @@ function RecapProjectCard({
   );
 }
 
+function RecapPrintProjectCard({
+  project,
+  recommendation,
+  rank,
+}: {
+  project: Project;
+  recommendation: Recommendation;
+  rank: number;
+}) {
+  const name = project.name?.trim() || "Projet à découvrir";
+  const sector = project.sector?.trim() ?? "";
+  const city = project.city?.trim() ?? "";
+  const description = project.description?.trim() ?? "";
+  const statusLabel = formatProjectStatusLabel(project);
+  const personalMatch = recommendation.personalMatch?.trim() ?? "";
+  const prepSteps = (project.preparationSteps ?? []).slice(0, 2);
+  const careers = (project.careers ?? []).slice(0, 2);
+
+  return (
+    <article className="recap-print-card flex flex-col gap-3">
+      <p className="recap-print-rank text-[0.65rem] font-semibold uppercase tracking-wider text-emerald-700">
+        Piste {rank}
+      </p>
+
+      {statusLabel && (
+        <p className="recap-print-status text-xs font-medium">{statusLabel}</p>
+      )}
+
+      <h4 className="recap-print-title text-base font-semibold leading-snug tracking-tight">
+        {name}
+      </h4>
+
+      {(sector || city) && (
+        <div className="recap-print-meta flex flex-wrap gap-2">
+          {sector && <span>{sector}</span>}
+          {city && <span>{city}</span>}
+        </div>
+      )}
+
+      {description && (
+        <p className="recap-print-description text-sm leading-relaxed">{description}</p>
+      )}
+
+      {personalMatch && (
+        <div className="recap-print-block">
+          <p className="recap-print-label mb-1.5">Pourquoi cette piste</p>
+          <p className="recap-print-body text-sm leading-relaxed">{personalMatch}</p>
+        </div>
+      )}
+
+      {careers.length > 0 && (
+        <div className="recap-print-block">
+          <p className="recap-print-label mb-1.5">Métiers à découvrir</p>
+          <ul className="recap-print-body space-y-1 text-sm leading-relaxed">
+            {careers.map((career) => (
+              <li key={career} className="flex gap-2">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                <span>{career}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {prepSteps.length > 0 && (
+        <div className="recap-print-block">
+          <p className="recap-print-label mb-1.5">Comment se préparer</p>
+          <ul className="recap-print-body space-y-1.5 text-sm leading-relaxed">
+            {prepSteps.map((step) => (
+              <li key={step} className="flex gap-2">
+                <span className="mt-0.5 text-emerald-700" aria-hidden="true">
+                  ✓
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </article>
+  );
+}
+
 /** Extract the YouTube video id from a standard watch or youtu.be URL. */
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -1290,16 +1388,144 @@ function DiscoverStage({
         )}
 
         {journeyDone && (
-        <section className="mt-20 animate-fade-in">
-          <h3 className="text-xl font-semibold tracking-tight text-zinc-100">
+        <section id="recap-print" className="mt-20 animate-fade-in">
+          <style media="print">{`
+            body {
+              background: #fff !important;
+              color: #000 !important;
+            }
+            body * {
+              visibility: hidden;
+            }
+            #recap-print,
+            #recap-print * {
+              visibility: visible;
+            }
+            #recap-print {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 1.25rem 1.5rem 1.5rem;
+              background: #fff;
+              color: #000;
+            }
+            .recap-screen-only {
+              display: none !important;
+            }
+            .recap-print-only {
+              display: block !important;
+              visibility: visible !important;
+            }
+            .print-recap-heading {
+              display: block !important;
+              visibility: visible !important;
+              margin: 0 0 0.35rem;
+              padding-bottom: 0.75rem;
+              border-bottom: 2px solid #059669;
+              font-size: 1.35rem;
+              font-weight: 700;
+              letter-spacing: -0.02em;
+              color: #000;
+            }
+            .print-recap-subtitle {
+              display: block !important;
+              visibility: visible !important;
+              margin: 0 0 1.25rem;
+              font-size: 0.85rem;
+              line-height: 1.5;
+              color: #374151 !important;
+            }
+            .recap-print-grid {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 1rem !important;
+            }
+            .recap-print-card {
+              border: 1px solid #d4d4d8 !important;
+              border-left: 4px solid #059669 !important;
+              background: #fff !important;
+              box-shadow: none !important;
+              break-inside: avoid;
+              page-break-inside: avoid;
+              pointer-events: none;
+              padding: 1rem 1rem 1.1rem !important;
+            }
+            .recap-print-hide {
+              display: none !important;
+            }
+            .recap-print-rank {
+              color: #047857 !important;
+              margin: 0 0 0.25rem !important;
+            }
+            .recap-print-title {
+              margin: 0 !important;
+              color: #000 !important;
+              font-size: 1rem !important;
+              font-weight: 700 !important;
+              line-height: 1.35 !important;
+            }
+            .recap-print-status {
+              color: #047857 !important;
+              font-size: 0.8rem !important;
+              font-weight: 600 !important;
+              margin: 0 0 0.35rem !important;
+            }
+            .recap-print-meta span {
+              border: 1px solid #d4d4d8 !important;
+              background: #f4f4f5 !important;
+              color: #27272a !important;
+              font-size: 0.7rem !important;
+              padding: 0.15rem 0.5rem !important;
+              border-radius: 9999px !important;
+            }
+            .recap-print-description {
+              color: #3f3f46 !important;
+              font-size: 0.82rem !important;
+              line-height: 1.45 !important;
+              margin: 0 !important;
+              -webkit-line-clamp: unset !important;
+              display: block !important;
+            }
+            .recap-print-block {
+              border: 1px solid #e4e4e7 !important;
+              background: #fafafa !important;
+              border-radius: 0.5rem !important;
+              padding: 0.65rem 0.75rem !important;
+              margin: 0 !important;
+            }
+            .recap-print-label {
+              color: #047857 !important;
+              font-size: 0.62rem !important;
+              font-weight: 700 !important;
+              letter-spacing: 0.08em !important;
+              text-transform: uppercase !important;
+            }
+            .recap-print-body {
+              color: #27272a !important;
+              font-size: 0.78rem !important;
+              line-height: 1.45 !important;
+            }
+            .recap-print-body li span.line-clamp-2 {
+              -webkit-line-clamp: unset !important;
+              display: block !important;
+            }
+          `}</style>
+          <h1 className="print-recap-heading hidden">Mes recommandations — L&apos;Avenir Ici</h1>
+          <p className="print-recap-subtitle hidden">
+            Synthèse de vos pistes industrielles en Lorraine — statut, correspondance et
+            premières étapes pour explorer chaque projet.
+          </p>
+          <h3 className="recap-screen-only text-xl font-semibold tracking-tight text-zinc-100">
             Vos pistes à explorer
           </h3>
-          <p className="mt-3 max-w-lg text-sm leading-loose text-zinc-300">
+          <p className="recap-screen-only mt-3 max-w-lg text-sm leading-loose text-zinc-300">
             Retrouvez ici les secteurs que nous avons identifiés pour vous. Cliquez
             sur une piste pour la revoir en détail.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="recap-screen-only mt-8 grid gap-4 sm:grid-cols-2">
             {resolvedRecommendations.map((entry, index) => (
               <RecapProjectCard
                 key={entry.project.id}
@@ -1309,10 +1535,29 @@ function DiscoverStage({
             ))}
           </div>
 
+          <div className="recap-print-only recap-print-grid mt-8 hidden grid gap-5">
+            {resolvedRecommendations.map((entry, index) => (
+              <RecapPrintProjectCard
+                key={`print-${entry.project.id}`}
+                project={entry.project}
+                recommendation={entry.recommendation}
+                rank={index + 1}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="recap-screen-only mt-8 w-full rounded-2xl border border-zinc-200 bg-white px-8 py-3.5 text-sm font-semibold text-zinc-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+          >
+            Sauvegarder mes résultats (PDF)
+          </button>
+
           <button
             type="button"
             onClick={onExplore}
-            className="mt-10 w-full rounded-2xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            className="recap-screen-only mt-10 w-full rounded-2xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
           >
             Explorer tous les projets de la région
           </button>
@@ -1320,7 +1565,7 @@ function DiscoverStage({
           <button
             type="button"
             onClick={() => setShowTerritory((v) => !v)}
-            className="mt-5 w-full text-center text-sm font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            className="recap-screen-only mt-5 w-full text-center text-sm font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
           >
             Voir les transformations du territoire
           </button>
@@ -1352,6 +1597,52 @@ function DiscoverStage({
           </div>
         </section>
         )}
+      </FadeIn>
+    </main>
+  );
+}
+
+function ContactStage({ onBack }: { onBack: () => void }) {
+  return (
+    <main className="mx-auto flex max-w-3xl flex-1 flex-col px-6 py-16 sm:px-10 sm:py-24">
+      <FadeIn className="mx-auto w-full max-w-lg">
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-8 inline-flex items-center gap-2 rounded-lg text-sm font-medium text-zinc-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour
+        </button>
+
+        <div className={`${GLASS_PANEL} px-8 py-12 sm:px-10 sm:py-14`}>
+          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+            Nous contacter
+          </h2>
+          <p className="mt-6 text-base leading-loose text-zinc-600">
+            Pour toute question, partenariat, ou pour ajouter un projet à notre base de
+            données, écrivez-nous directement.
+          </p>
+
+          <div className="mt-10 rounded-2xl border border-zinc-200/70 bg-white/60 px-6 py-5">
+            <p className="text-sm font-semibold text-zinc-900">Elias Kremer</p>
+            <a
+              href="mailto:eliaskremer123@gmail.com"
+              className="mt-2 inline-block text-sm font-medium text-emerald-600 underline-offset-4 transition-colors hover:text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            >
+              eliaskremer123@gmail.com
+            </a>
+          </div>
+        </div>
       </FadeIn>
     </main>
   );
@@ -1423,6 +1714,16 @@ export default function LavenirExperience() {
     "welcome" | "discover"
   >("discover");
   const [discoverShowRecap, setDiscoverShowRecap] = useState(false);
+  const [previousStage, setPreviousStage] = useState<Stage>("welcome");
+
+  const openContact = useCallback(() => {
+    setPreviousStage(stage);
+    setStage("contact");
+  }, [stage]);
+
+  const closeContact = useCallback(() => {
+    setStage(previousStage);
+  }, [previousStage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1540,7 +1841,11 @@ export default function LavenirExperience() {
   };
 
   return (
-    <Shell pinHeader={stage !== "explore"}>
+    <Shell
+      pinHeader={stage !== "explore"}
+      onHomeClick={handleRestart}
+      onContactClick={openContact}
+    >
       {stage === "welcome" && (
         <WelcomeStage
           onStart={() => setStage("understand")}
@@ -1617,6 +1922,8 @@ export default function LavenirExperience() {
       {stage === "continue" && (
         <ContinueStage onRestart={handleRestart} onExplore={handleExploreOther} />
       )}
+
+      {stage === "contact" && <ContactStage onBack={closeContact} />}
     </Shell>
   );
 }

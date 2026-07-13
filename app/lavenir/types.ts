@@ -6,7 +6,8 @@ export type Stage =
   | "transition"
   | "discover"
   | "explore"
-  | "continue";
+  | "continue"
+  | "contact";
 
 export type QuestionId =
   | "location"

@@ -226,7 +226,7 @@ function Shell({
       <header
         ref={headerRef}
         className={[
-          "relative z-20 h-14 border-b border-zinc-200/15 sm:h-16",
+          "relative z-20 h-16 border-b border-zinc-200/15 sm:h-[4.75rem]",
           pinHeader ? "sticky top-0" : "relative",
         ].join(" ")}
       >
@@ -234,7 +234,7 @@ function Shell({
           <button
             type="button"
             onClick={onHomeClick}
-            className="relative h-full max-w-[min(calc(100vw-5.5rem),22rem)] rounded-lg transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a]"
+            className="relative h-full max-w-[min(calc(100vw-5.5rem),24rem)] rounded-lg transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a]"
             aria-label="L'Avenir Ici — Accueil"
           >
             <div
@@ -1955,7 +1955,7 @@ export default function LavenirExperience() {
 
   return (
     <Shell
-      pinHeader={stage !== "explore"}
+      pinHeader={false}
       onHomeClick={handleRestart}
       onContactClick={openContact}
     >

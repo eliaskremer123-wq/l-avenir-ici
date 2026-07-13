@@ -134,6 +134,50 @@ function ExperienceBackdrop() {
   );
 }
 
+function parseRgb(color: string): { r: number; g: number; b: number; a: number } | null {
+  const match = color.match(
+    /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)/,
+  );
+  if (!match) return null;
+  return {
+    r: Number(match[1]),
+    g: Number(match[2]),
+    b: Number(match[3]),
+    a: match[4] !== undefined ? Number(match[4]) : 1,
+  };
+}
+
+function isLightSurface(element: HTMLElement): boolean {
+  let current: HTMLElement | null = element;
+  while (current && current !== document.documentElement) {
+    const { backgroundColor } = window.getComputedStyle(current);
+    const rgb = parseRgb(backgroundColor);
+    if (rgb && rgb.a > 0.08) {
+      const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+      return luminance > 0.72;
+    }
+    current = current.parentElement;
+  }
+  return false;
+}
+
+function detectHeaderOnLightBackground(header: HTMLElement): boolean {
+  const rect = header.getBoundingClientRect();
+  const y = rect.top + rect.height / 2;
+  const sampleXs = [0.25, 0.5, 0.75].map((ratio) => rect.left + rect.width * ratio);
+
+  for (const x of sampleXs) {
+    const stack = document.elementsFromPoint(x, y);
+    for (const node of stack) {
+      if (!(node instanceof HTMLElement)) continue;
+      if (header.contains(node)) continue;
+      if (isLightSurface(node)) return true;
+    }
+  }
+
+  return false;
+}
+
 function Shell({
   children,
   pinHeader = true,
@@ -145,22 +189,82 @@ function Shell({
   onHomeClick: () => void;
   onContactClick: () => void;
 }) {
+  const headerRef = useRef<HTMLElement>(null);
+  const [onLightBackground, setOnLightBackground] = useState(false);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setOnLightBackground(detectHeaderOnLightBackground(header));
+    };
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    const observer = new ResizeObserver(schedule);
+    observer.observe(document.body);
+
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      observer.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [children]);
+
   return (
     <div className="relative flex min-h-full flex-col font-sans text-zinc-900">
       <ExperienceBackdrop />
       <header
+        ref={headerRef}
         className={[
-          "relative z-20 border-b border-zinc-200/15",
+          "relative z-20 h-14 border-b border-zinc-200/15 sm:h-16",
           pinHeader ? "sticky top-0" : "relative",
         ].join(" ")}
       >
-        <div className="flex items-center justify-center px-6 py-5 sm:px-10">
+        <div className="flex h-full items-stretch justify-center px-6 sm:px-10">
           <button
             type="button"
             onClick={onHomeClick}
-            className="text-base font-semibold tracking-tight text-zinc-100 transition-opacity hover:opacity-80 sm:text-lg"
+            className="relative h-full max-w-[min(calc(100vw-5.5rem),22rem)] rounded-lg transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a]"
+            aria-label="L'Avenir Ici — Accueil"
           >
-            L&apos;Avenir Ici
+            <div
+              className="relative h-full"
+              style={{ aspectRatio: "840 / 400" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/lavenir-ici-logo-dark.png"
+                alt=""
+                aria-hidden="true"
+                width={840}
+                height={400}
+                className={[
+                  "absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ease-in-out",
+                  onLightBackground ? "opacity-0" : "opacity-100",
+                ].join(" ")}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/lavenir-ici-logo-light.png"
+                alt="L'Avenir Ici"
+                width={840}
+                height={400}
+                className={[
+                  "absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ease-in-out",
+                  onLightBackground ? "opacity-100" : "opacity-0",
+                ].join(" ")}
+              />
+            </div>
           </button>
         </div>
         <button

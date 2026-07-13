@@ -226,7 +226,7 @@ function Shell({
       <header
         ref={headerRef}
         className={[
-          "relative z-20 h-16 border-b border-zinc-200/15 sm:h-[4.75rem]",
+          "relative z-20 h-[4.25rem] border-b border-zinc-200/15 sm:h-[5.25rem]",
           pinHeader ? "sticky top-0" : "relative",
         ].join(" ")}
       >
@@ -234,7 +234,7 @@ function Shell({
           <button
             type="button"
             onClick={onHomeClick}
-            className="relative h-full max-w-[min(calc(100vw-5.5rem),24rem)] rounded-lg transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a]"
+            className="relative h-full max-w-[min(calc(100vw-5.5rem),26rem)] rounded-lg transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a]"
             aria-label="L'Avenir Ici — Accueil"
           >
             <div
@@ -1518,9 +1518,12 @@ function DiscoverStage({
               top: 0;
               width: 100%;
               margin: 0;
-              padding: 1.25rem 1.5rem 1.5rem;
+              padding: 1.5rem 1.75rem 1.75rem;
               background: #fff;
               color: #000;
+            }
+            @page {
+              margin: 0.65in;
             }
             .recap-screen-only {
               display: none !important;
@@ -1529,24 +1532,54 @@ function DiscoverStage({
               display: block !important;
               visibility: visible !important;
             }
+            .print-recap-brand {
+              display: flex !important;
+              visibility: visible !important;
+              justify-content: center !important;
+              margin: 0 0 1.1rem !important;
+              padding-bottom: 1rem !important;
+              border-bottom: 2px solid #059669 !important;
+            }
+            .print-recap-logo {
+              display: block !important;
+              visibility: visible !important;
+              width: min(100%, 34rem) !important;
+              height: auto !important;
+              max-height: 6rem !important;
+              object-fit: contain !important;
+            }
             .print-recap-heading {
               display: block !important;
               visibility: visible !important;
-              margin: 0 0 0.35rem;
-              padding-bottom: 0.75rem;
-              border-bottom: 2px solid #059669;
-              font-size: 1.35rem;
+              margin: 0 0 0.4rem;
+              padding-bottom: 0;
+              border-bottom: none;
+              text-align: center;
+              font-size: 1.2rem;
               font-weight: 700;
               letter-spacing: -0.02em;
-              color: #000;
+              color: #18181b;
             }
             .print-recap-subtitle {
               display: block !important;
               visibility: visible !important;
-              margin: 0 0 1.25rem;
-              font-size: 0.85rem;
-              line-height: 1.5;
-              color: #374151 !important;
+              margin: 0 auto 1.35rem;
+              max-width: 34rem;
+              text-align: center;
+              font-size: 0.88rem;
+              line-height: 1.55;
+              color: #52525b !important;
+            }
+            .print-recap-footer {
+              display: block !important;
+              visibility: visible !important;
+              margin-top: 1.35rem;
+              padding-top: 0.85rem;
+              border-top: 1px solid #e4e4e7;
+              text-align: center;
+              font-size: 0.72rem;
+              line-height: 1.45;
+              color: #71717a !important;
             }
             .recap-print-grid {
               display: flex !important;
@@ -1556,12 +1589,13 @@ function DiscoverStage({
             .recap-print-card {
               border: 1px solid #d4d4d8 !important;
               border-left: 4px solid #059669 !important;
+              border-radius: 0.65rem !important;
               background: #fff !important;
               box-shadow: none !important;
               break-inside: avoid;
               page-break-inside: avoid;
               pointer-events: none;
-              padding: 1rem 1rem 1.1rem !important;
+              padding: 1.05rem 1.1rem 1.15rem !important;
             }
             .recap-print-hide {
               display: none !important;
@@ -1623,7 +1657,17 @@ function DiscoverStage({
               display: block !important;
             }
           `}</style>
-          <h1 className="print-recap-heading hidden">Mes recommandations — L&apos;Avenir Ici</h1>
+          <div className="recap-print-only print-recap-brand hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/lavenir-ici-logo-print.png"
+              alt="L'Avenir Ici"
+              width={840}
+              height={400}
+              className="print-recap-logo"
+            />
+          </div>
+          <h1 className="print-recap-heading hidden">Mes recommandations</h1>
           <p className="print-recap-subtitle hidden">
             Synthèse de vos pistes industrielles en Lorraine — statut, correspondance et
             premières étapes pour explorer chaque projet.
@@ -1656,6 +1700,11 @@ function DiscoverStage({
               />
             ))}
           </div>
+
+          <p className="recap-print-only print-recap-footer hidden">
+            lavenirici.org — Un outil civique pour comprendre l&apos;avenir industriel de
+            Lorraine
+          </p>
 
           <div className="recap-screen-only mt-8 flex flex-col gap-4">
             <button

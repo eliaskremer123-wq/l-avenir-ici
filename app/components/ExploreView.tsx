@@ -131,7 +131,7 @@ function ExploreCard({
         "group relative flex snap-start flex-col rounded-[1.5rem] bg-white p-4 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2",
         recommended
           ? "border border-emerald-300 ring-1 ring-emerald-200"
-          : "border border-zinc-200/80",
+          : "border border-zinc-200",
       ].join(" ")}
     >
       {recommended && (
@@ -245,9 +245,9 @@ function ProjectModal({
               </p>
               <ul className="space-y-2">
                 {careers.map((career) => (
-                  <li key={career} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-700">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                    {career}
+                  <li key={career} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-700">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                    <span>{career}</span>
                   </li>
                 ))}
               </ul>
@@ -261,9 +261,9 @@ function ProjectModal({
               </p>
               <ul className="space-y-2">
                 {skills.map((skill) => (
-                  <li key={skill} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-700">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                    {skill}
+                  <li key={skill} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-700">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                    <span>{skill}</span>
                   </li>
                 ))}
               </ul>
@@ -271,7 +271,7 @@ function ProjectModal({
           )}
 
           {steps.length > 0 && (
-            <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-5 py-5">
+            <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-5 shadow-sm">
               <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
                 Comment vous préparer dès aujourd&apos;hui
               </p>
@@ -303,7 +303,7 @@ function ProjectModal({
           )}
 
           {statusLabel && (
-            <div className="rounded-2xl border border-zinc-200/60 bg-zinc-50 px-5 py-4">
+            <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
                 Horizon
               </p>

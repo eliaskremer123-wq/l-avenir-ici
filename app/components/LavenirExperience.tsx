@@ -33,9 +33,9 @@ const INITIAL_ANSWERS: Answers = {
 const OPTION_CARD =
   "rounded-xl border bg-white text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 focus-visible:ring-offset-2";
 const GLASS_PANEL =
-  "glass-panel rounded-[1.75rem] sm:rounded-[2rem]";
+  "rounded-[1.75rem] border border-zinc-200 bg-white shadow-sm sm:rounded-[2rem]";
 const GLASS_CARD =
-  "glass-panel-subtle rounded-2xl border border-zinc-200/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)]";
+  "rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md";
 const QUESTIONNAIRE_CARD =
   "mx-auto flex w-full max-w-xl flex-col rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-sm md:max-w-2xl";
 
@@ -150,11 +150,11 @@ function Shell({
       <ExperienceBackdrop />
       <header
         className={[
-          "z-20 border-b border-zinc-200/15",
+          "relative z-20 border-b border-zinc-200/15",
           pinHeader ? "sticky top-0" : "relative",
         ].join(" ")}
       >
-        <div className="relative mx-auto flex w-full max-w-3xl items-center justify-center px-6 py-5 sm:px-10">
+        <div className="flex items-center justify-center px-6 py-5 sm:px-10">
           <button
             type="button"
             onClick={onHomeClick}
@@ -163,6 +163,13 @@ function Shell({
             L&apos;Avenir Ici
           </button>
         </div>
+        <button
+          type="button"
+          onClick={onContactClick}
+          className="absolute inset-y-0 right-6 flex items-center text-xs font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-200 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f172a] sm:right-10"
+        >
+          Contact
+        </button>
       </header>
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
       <footer className="relative z-10 mt-auto border-b-0 border-t">
@@ -682,9 +689,9 @@ function AnalyzeStage({ onComplete }: { onComplete: () => void }) {
                   className={[
                     "flex items-center gap-4 rounded-2xl border px-5 py-4 transition-all duration-500 ease-out",
                     done
-                      ? "border-emerald-200/60 bg-white/80 shadow-sm"
+                      ? "border-emerald-200 bg-white shadow-sm"
                       : active
-                        ? "border-zinc-200/60 bg-white/50"
+                        ? "border-zinc-200 bg-white shadow-sm"
                         : "border-transparent bg-transparent opacity-35",
                   ].join(" ")}
                 >
@@ -694,8 +701,8 @@ function AnalyzeStage({ onComplete }: { onComplete: () => void }) {
                       done
                         ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20"
                         : active
-                          ? "border-2 border-emerald-400/40 bg-emerald-50/80 text-emerald-600"
-                          : "border border-zinc-200/80 text-zinc-300",
+                          ? "border-2 border-emerald-400 bg-white text-emerald-600"
+                          : "border border-zinc-200 text-zinc-400",
                     ].join(" ")}
                   >
                     {done ? (
@@ -996,7 +1003,7 @@ function PreparationBlock({
   if (steps.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 px-5 py-5">
+    <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-5 shadow-sm">
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
         Comment vous préparer dès aujourd&apos;hui
       </p>
@@ -1067,7 +1074,7 @@ function RecommendationCard({
       className={[
         "relative flex flex-col rounded-[1.75rem] p-8 transition-all duration-300 sm:p-10",
         isTopMatch
-          ? "glass-panel border-emerald-200/70 shadow-[0_24px_64px_rgba(16,185,129,0.1)] ring-1 ring-emerald-100/60"
+          ? "rounded-[1.75rem] border border-emerald-200 bg-white shadow-sm ring-1 ring-emerald-100"
           : GLASS_CARD,
       ].join(" ")}
     >
@@ -1137,9 +1144,9 @@ function RecommendationCard({
             </p>
             <ul className="space-y-2">
               {careers.map((career) => (
-                <li key={career} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-700">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                  {career}
+                <li key={career} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-700">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                  <span>{career}</span>
                 </li>
               ))}
             </ul>
@@ -1153,9 +1160,9 @@ function RecommendationCard({
             </p>
             <ul className="space-y-2">
               {skills.map((skill) => (
-                <li key={skill} className="flex items-center gap-2.5 text-sm leading-relaxed text-zinc-700">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                  {skill}
+                <li key={skill} className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-700">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+                  <span>{skill}</span>
                 </li>
               ))}
             </ul>
@@ -1177,7 +1184,7 @@ function RecommendationCard({
         )}
 
         {statusLabel && (
-          <div className="rounded-2xl border border-zinc-200/60 bg-white/70 px-5 py-4 backdrop-blur-sm">
+          <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4">
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-700">
               Horizon
             </p>
@@ -1190,7 +1197,7 @@ function RecommendationCard({
             href={learnMore}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 block w-full rounded-xl border border-zinc-200/70 bg-white/60 py-3 text-center text-sm font-medium text-zinc-700 backdrop-blur-sm transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
+            className="mt-1 block w-full rounded-xl border border-zinc-200 bg-white py-3 text-center text-sm font-medium text-zinc-700 transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
           >
             Explorer ce secteur
           </a>
@@ -1307,10 +1314,10 @@ function DiscoverStage({
         </div>
 
         <div className={`${GLASS_PANEL} mx-auto mt-14 max-w-2xl px-8 py-10 sm:px-10 sm:py-12`}>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-600">
+          <p className="text-sm font-medium tracking-wide text-emerald-700/80">
             D&apos;après vos sélections
           </p>
-          <p className="mt-5 text-base leading-loose text-zinc-700">{personalSummary}</p>
+          <p className="mt-5 text-base leading-loose text-zinc-500">{personalSummary}</p>
         </div>
 
         {!journeyDone && (
@@ -1546,29 +1553,31 @@ function DiscoverStage({
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="recap-screen-only mt-8 w-full rounded-2xl border border-zinc-200 bg-white px-8 py-3.5 text-sm font-semibold text-zinc-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
-          >
-            Sauvegarder mes résultats (PDF)
-          </button>
+          <div className="recap-screen-only mt-8 flex flex-col gap-4">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="w-full rounded-2xl border border-zinc-200 bg-white px-8 py-3.5 text-sm font-semibold text-zinc-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            >
+              Sauvegarder mes résultats (PDF)
+            </button>
 
-          <button
-            type="button"
-            onClick={onExplore}
-            className="recap-screen-only mt-10 w-full rounded-2xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
-          >
-            Explorer tous les projets de la région
-          </button>
+            <button
+              type="button"
+              onClick={onExplore}
+              className="w-full rounded-2xl bg-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            >
+              Explorer tous les projets de la région
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setShowTerritory((v) => !v)}
-            className="recap-screen-only mt-5 w-full text-center text-sm font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
-          >
-            Voir les transformations du territoire
-          </button>
+            <button
+              type="button"
+              onClick={() => setShowTerritory((v) => !v)}
+              className="w-full text-center text-sm font-medium text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
+            >
+              Voir les transformations du territoire
+            </button>
+          </div>
         </section>
         )}
 
@@ -1588,7 +1597,7 @@ function DiscoverStage({
                 className={`${GLASS_CARD} p-7 sm:p-8`}
               >
                 <h4 className="text-base font-semibold text-zinc-900">{topic.title}</h4>
-                <p className="mt-2.5 text-sm font-medium leading-relaxed text-zinc-600">
+                <p className="mt-2.5 text-sm font-medium leading-relaxed text-zinc-500">
                   {topic.summary}
                 </p>
                 <p className="mt-4 text-sm leading-loose text-zinc-500">{topic.detail}</p>
@@ -1628,12 +1637,12 @@ function ContactStage({ onBack }: { onBack: () => void }) {
           <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
             Nous contacter
           </h2>
-          <p className="mt-6 text-base leading-loose text-zinc-600">
+          <p className="mt-6 text-base leading-loose text-zinc-500">
             Pour toute question, partenariat, ou pour ajouter un projet à notre base de
             données, écrivez-nous directement.
           </p>
 
-          <div className="mt-10 rounded-2xl border border-zinc-200/70 bg-white/60 px-6 py-5">
+          <div className="mt-10 rounded-2xl border border-zinc-200 bg-white px-6 py-5 shadow-sm">
             <p className="text-sm font-semibold text-zinc-900">Elias Kremer</p>
             <a
               href="mailto:eliaskremer123@gmail.com"

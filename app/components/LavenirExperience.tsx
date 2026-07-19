@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { usePostHog } from "posthog-js/react";
 import ExploreView from "./ExploreView";
 import { ANALYSIS_STEPS, PROJECTS, QUESTIONS } from "../lavenir/data";
 import {
@@ -1155,6 +1156,7 @@ function RecommendationCard({
   showPrevious: boolean;
   nextLabel: string;
 }) {
+  const posthog = usePostHog();
   const [imageFailed, setImageFailed] = useState(false);
   // Defensive display guards: the live sheet is a weak backend, so any field
   // may arrive missing. Never render undefined or broken blocks.
@@ -1301,6 +1303,11 @@ function RecommendationCard({
             href={learnMore}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              posthog?.capture("project_learn_more_clicked", {
+                project_name: name,
+              });
+            }}
             className="mt-1 block w-full rounded-xl border border-zinc-200 bg-white py-3 text-center text-sm font-medium text-zinc-700 transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
           >
             Explorer ce secteur
@@ -1353,6 +1360,7 @@ function DiscoverStage({
   onContinue: () => void;
   onExplore: () => void;
 }) {
+  const posthog = usePostHog();
   // Recommendations are ranked directly over the live /api/projects catalog, so
   // each one binds to its real project by id. The local dataset is used only as
   // a last-resort safety fallback so a card is never blank.
@@ -1379,6 +1387,20 @@ function DiscoverStage({
   const [showTerritory, setShowTerritory] = useState(false);
   const [viewingFromRecap, setViewingFromRecap] = useState(false);
   const current = resolvedRecommendations[currentIndex];
+
+  useEffect(() => {
+    posthog?.capture("recommendations_viewed", {
+      recommendation_count: recommendations.length,
+    });
+  }, [posthog, recommendations.length]);
+
+  useEffect(() => {
+    if (journeyDone || !current) return;
+    posthog?.capture("project_viewed", {
+      project_name: current.project.name?.trim() || undefined,
+      sector: current.project.sector?.trim() || undefined,
+    });
+  }, [currentIndex, journeyDone, current, posthog]);
 
   const handleNextProject = () => {
     if (currentIndex < total - 1) {
@@ -1709,7 +1731,14 @@ function DiscoverStage({
           <div className="recap-screen-only mt-8 flex flex-col gap-4">
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => {
+                posthog?.capture("recommendations_pdf_downloaded", {
+                  recommendation_count: resolvedRecommendations.length,
+                  first_recommendation_project:
+                    resolvedRecommendations[0]?.project.name?.trim() || undefined,
+                });
+                window.print();
+              }}
               className="w-full rounded-2xl border border-zinc-200 bg-white px-8 py-3.5 text-sm font-semibold text-zinc-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2"
             >
               Sauvegarder mes résultats (PDF)
@@ -1857,6 +1886,7 @@ function ContinueStage({
 }
 
 export default function LavenirExperience() {
+  const posthog = usePostHog();
   const [stage, setStage] = useState<Stage>("welcome");
   const [questionIndex, setQuestionIndex] = useState(0);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
@@ -1976,6 +2006,9 @@ export default function LavenirExperience() {
 
   const handleAnalyzeComplete = useCallback(() => {
     const recs = computeRecommendations(answers, projects);
+    posthog?.capture("questionnaire_completed", {
+      recommendation_count: recs.length,
+    });
     const ordered = orderedProjectsFromRecommendations(recs, projects);
     // Start batch-1 preload synchronously so images warm during the transition
     // screen — before useEffect runs and before the first card mounts.
@@ -1983,7 +2016,7 @@ export default function LavenirExperience() {
     setRecommendations(recs);
     setPersonalSummary(buildPersonalSummary());
     setStage("transition");
-  }, [answers, projects]);
+  }, [answers, projects, posthog]);
 
   const handleRestart = () => {
     setStage("welcome");
@@ -1997,6 +2030,7 @@ export default function LavenirExperience() {
   };
 
   const handleExploreOther = () => {
+    posthog?.capture("questionnaire_started");
     setDirection("forward");
     setQuestionIndex(0);
     setStage("understand");
@@ -2010,7 +2044,10 @@ export default function LavenirExperience() {
     >
       {stage === "welcome" && (
         <WelcomeStage
-          onStart={() => setStage("understand")}
+          onStart={() => {
+            posthog?.capture("questionnaire_started");
+            setStage("understand");
+          }}
           onExplore={() => {
             setExploreReturnStage("welcome");
             setStage("explore");

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import type { Project, Recommendation } from "../lavenir/types";
 import { formatProjectStatusLabel } from "../lavenir/timeline-status";
 
@@ -175,6 +176,7 @@ function ProjectModal({
   project: Project;
   onClose: () => void;
 }) {
+  const posthog = usePostHog();
   const name = project.name?.trim() || "Projet à découvrir";
   const sector = project.sector?.trim() ?? "";
   const city = project.city?.trim() ?? "";
@@ -187,6 +189,13 @@ function ProjectModal({
   const hasLearnMore = /^https?:\/\//i.test(learnMore);
   const videoUrl = project.videoUrl?.trim() ?? "";
   const youTubeId = videoUrl ? extractYouTubeId(videoUrl) : null;
+
+  useEffect(() => {
+    posthog?.capture("project_viewed", {
+      project_name: name,
+      sector: sector || undefined,
+    });
+  }, [posthog, name, sector]);
 
   return (
     <div
@@ -316,6 +325,11 @@ function ProjectModal({
               href={learnMore}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                posthog?.capture("project_learn_more_clicked", {
+                  project_name: name,
+                });
+              }}
               className="block w-full rounded-xl border border-zinc-200 bg-white py-3 text-center text-sm font-medium text-zinc-700 transition-all duration-200 hover:-translate-y-px hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30"
             >
               En savoir plus
